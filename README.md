@@ -46,6 +46,11 @@ The default shared folder is `Internal storage/pocket2droid`:
 
 Use a dedicated storagecard folder. The guest OS can modify or delete files inside it.
 
+## Community and download links
+
+- [Discord](https://discord.com/invite/33DtX7HcxA)
+- [YouTube](https://www.youtube.com/@Pocket2Droid)
+
 ## Reporting problems
 
 Please open an issue with:
@@ -56,7 +61,3 @@ Please open an issue with:
 - Application or game name, if relevant
 - Steps to reproduce the problem
 
-## Community and download links
-
-- [Discord](https://discord.com/invite/33DtX7HcxA)
-- [YouTube](https://www.youtube.com/@Pocket2Droid)

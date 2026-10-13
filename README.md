@@ -59,5 +59,4 @@ Please open an issue with:
 - Pocket2Droid version
 - ROM filename and selected guest resolution
 - Application or game name, if relevant
-- Steps to reproduce the problem
 

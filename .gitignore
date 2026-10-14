@@ -1,0 +1,52 @@
+# Personal signing material and local configuration
+/Key/
+/keys/
+/android/signing/
+*.jks
+*.keystore
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
+local.properties
+
+# Generated Android build outputs; retain recorded build inputs
+/android/build/*
+!/android/build/bionic-engine.json
+!/android/build/bionic-tools.json
+!/android/build/runtime.json
+!/android/build/storage-runtime.json
+!/android/build/termux-reference/
+
+# Other build outputs and caches
+/build/
+/dist/
+/apk/
+/*.apk
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.gradle/
+node_modules/
+
+# User ROMs, saves and recordings
+/Roms/
+/data/
+/storagecard/
+/pocket2droid/
+/PC windows mobile 6 Files/
+/videos/
+
+# Local review metadata; release ZIP has its own source inventory
+/PREVIEW_CHANGES.json
+/SOURCE_SHA256.json
+
+# Editor, operating-system and assistant-local files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+/.codex/
+/.codex-remote-attachments/

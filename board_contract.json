@@ -1,0 +1,238 @@
+{
+  "status": "initial-current-implementation-contract; independently verify architectural assumptions",
+  "machine_name": "p2d-devemu",
+  "cpu": {
+    "model": "ARM920T",
+    "isa": "ARMv4T",
+    "current_midr": "0x41009200",
+    "reset_pc": "0x00000000",
+    "current_reset_sp": "0x30010000",
+    "current_reset_cpsr": "0x000000D3",
+    "current_cp15_reset": "all16 exposed slots zero; not asserted to match hardware",
+    "requirements": [
+      "ARM/Thumb",
+      "banked registers/SPSRs",
+      "IRQ/FIQ/SWI/abort",
+      "FCSE c13",
+      "domains/AP/S/R",
+      "coarse/fine tables and1KiB granules",
+      "precise partial block-transfer faults",
+      "alignment and rotated loads",
+      "code invalidation and MMU remaps"
+    ],
+    "evidence": [
+      "src/arm_core.c:13267 wm6_cpu_init_production",
+      "src/arm_core.c:11285 CP15 identity",
+      "src/arm_core.c:9855 FCSE translation"
+    ]
+  },
+  "memory": [
+    {
+      "name": "raw boot image",
+      "base": "0x00000000",
+      "bytes": 100663296,
+      "host_writable": false,
+      "guest_commands": "16bit AMD-style unlock/autoselect/reset; normal ROM reads stay fast",
+      "evidence": "src/arm_core.c:7512 flash_write16"
+    },
+    {
+      "name": "SDRAM",
+      "base": "0x30000000",
+      "bytes": 134217728,
+      "initial_bytes": 0,
+      "evidence": "src/wm6android.c:305 and4337"
+    },
+    {
+      "name": "persistent RAM-FMD arena",
+      "base": "0x34000000",
+      "bytes": 33554432,
+      "inside_sdram": true,
+      "persistence": "separate disposable backing/adapter; not generic NOR disk",
+      "evidence": "src/wm6android.c:1541 and3787"
+    }
+  ],
+  "rom_flash_id": {
+    "manufacturer": "0x0001",
+    "device": "0x225B",
+    "unlock_addresses": [
+      "0xAAAA",
+      "0x5554"
+    ],
+    "commands": [
+      "0xAAAA",
+      "0x5555",
+      "0x9090",
+      "0xF0F0"
+    ],
+    "evidence": "src/arm_core.c:2844 and7512"
+  },
+  "boot_arguments": [
+    {
+      "address": "0x30020044",
+      "width": 4,
+      "value": "0xDE12DE34"
+    },
+    {
+      "address": "0x30020048",
+      "width": 2,
+      "value": 240
+    },
+    {
+      "address": "0x3002004A",
+      "width": 2,
+      "value": 320
+    },
+    {
+      "address": "0x3002004C",
+      "width": 2,
+      "value": 16
+    }
+  ],
+  "mmio": [
+    {
+      "name": "PCMCIA CL-PD6710 index/data",
+      "base": "0x110003E0",
+      "evidence": "src/arm_core.c:8014"
+    },
+    {
+      "name": "S3C2410 memory controller",
+      "base": "0x48000000",
+      "status": "currently stored registers; verify boot accesses"
+    },
+    {
+      "name": "S3C2410 interrupt controller",
+      "base": "0x4A000000",
+      "bytes": 32,
+      "reset_mask": "0xFFFFFFFF",
+      "timer4_irq": 14,
+      "adc_irq": 31,
+      "evidence": "src/arm_core.c:2721"
+    },
+    {
+      "name": "S3C2410 DMA",
+      "base": "0x4B000000",
+      "required_channel": 2,
+      "destination": "IISFIFO0x55000010",
+      "evidence": "src/arm_core.c v40_dma2_tick"
+    },
+    {
+      "name": "S3C2410 clock/power",
+      "base": "0x4C000000",
+      "status": "verify PLL/divider contract before scheduling"
+    },
+    {
+      "name": "S3C2410 LCD",
+      "base": "0x4D000000",
+      "evidence": "src/wm6android.c GuestLcdInfo",
+      "default": "240x320x16; dynamic framebuffer address/stride from registers"
+    },
+    {
+      "name": "S3C2410 UARTs",
+      "base": "0x50000000",
+      "bytes": 49152,
+      "evidence": "src/arm_core.c:7555"
+    },
+    {
+      "name": "Device Emulator DMA transport",
+      "base": "0x500F0000",
+      "bytes": 8480,
+      "evidence": "src/arm_core.c:7946"
+    },
+    {
+      "name": "Device Emulator Folder Sharing",
+      "base": "0x500F4000",
+      "bytes": 16,
+      "evidence": "src/arm_core.c:7615",
+      "status": "must implement/explicitly disable through valid guest protocol; no real shared folder"
+    },
+    {
+      "name": "Device Emulator services",
+      "base": "0x500F5000",
+      "bytes": 8,
+      "external_irq": 11,
+      "evidence": "src/arm_core.h:628"
+    },
+    {
+      "name": "Speaker/NLED/battery",
+      "base": "0x500FFFC0",
+      "status": "sparse byte registers; evidence src/arm_core.c:8074"
+    },
+    {
+      "name": "PWM timers",
+      "base": "0x51000000",
+      "bytes": 68,
+      "evidence": "src/arm_core.c:2777"
+    },
+    {
+      "name": "watchdog",
+      "base": "0x53000000",
+      "status": "verify guest register usage"
+    },
+    {
+      "name": "IIS",
+      "base": "0x55000000",
+      "bytes": 20,
+      "evidence": "src/arm_core.c:8777"
+    },
+    {
+      "name": "GPIO/external interrupts",
+      "base": "0x56000000",
+      "bytes": 256,
+      "chip_id": "0x32410000",
+      "evidence": "src/arm_core.c:7566"
+    },
+    {
+      "name": "RTC",
+      "base": "0x57000000",
+      "bytes": 256,
+      "status": "current valid fixed BCD date is legacy bring-up behaviour; choose explicit clock policy",
+      "evidence": "src/arm_core.c:7786"
+    },
+    {
+      "name": "ADC/touch",
+      "base": "0x58000000",
+      "bytes": 20,
+      "calibration": "raw panelX90..965,Y50..920; ADCDAT0=panelY, ADCDAT1=panelX",
+      "evidence": "src/arm_core.c:7800"
+    },
+    {
+      "name": "PS2/SPI input",
+      "base": "0x59000020",
+      "bytes": 24,
+      "evidence": "src/arm_core.c:7951"
+    }
+  ],
+  "events": {
+    "current_timer4_clock_note": "25.375MHz approximate timer,202.8MHz CPU; legacy8-instruction cadence is not a redesign requirement",
+    "new_policy": "QEMU virtual-clock deadlines, chip clock/divider registers, ordered device/IRQ effects",
+    "evidence": "src/arm_core.c:2791",
+    "performance_constraint": "no per-instruction project callbacks or full device polling"
+  },
+  "storage": {
+    "overlay_bytes": 33554432,
+    "original_overlay_access": "not opened writable or automatically migrated",
+    "current_attach": "32MiB arena copied before CPU starts; RAM-FMD allocator binding restored deliberately",
+    "current_save": "initial full temporary file/fsync/rename; later dirty-block writes/fsync",
+    "prototype": "fresh disposable files; guest write, normal stop, reopen and verify contents",
+    "snapshot": "WM6CPU raw serialization is incompatible with QEMU canonical state",
+    "evidence": [
+      "src/wm6android.c:3785",
+      "src/wm6android.c:3787",
+      "src/wm6android.c:4033"
+    ]
+  },
+  "open_compatibility_questions": [
+    "hardware-vs-current CPU reset/CP15/cache ID values",
+    "SDRAM aliases such as0x42000000 in the historical donor",
+    "out-of-RAM probe bus behaviour; never create writable fake RAM above128MiB",
+    "required peripheral access ordering, clocks and interrupt priority",
+    "cold-boot RAM-FMD allocator/persistence behaviour without legacy snapshots"
+  ],
+  "prototype_result_2026_10_07": {
+    "status": "LOCAL_COMPATIBILITY_MILESTONE_PASS",
+    "tests": 37,
+    "performance_proven": false,
+    "result": "results/RESULT.txt",
+    "storage": "CPU reset/raw ROM boot with prototype retained128MiB SDRAM+32MiB RAM-FMD; verified private copies"
+  }
+}

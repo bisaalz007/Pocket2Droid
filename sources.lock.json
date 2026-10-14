@@ -1,0 +1,43 @@
+{
+  "qemu": {
+    "repository": "https://github.com/qemu/qemu.git",
+    "revision": "f9587d4045c67cd0d8d8bdcd5d0bb5b6b395b63c",
+    "version": "11.1.50",
+    "license": "GPL-2.0; per-file SPDX notices retained",
+    "branch": "p2d-devemu",
+    "purpose": "local full-system feasibility experiment, no upstream submission"
+  },
+  "historical_board_reference": {
+    "repository": "https://github.com/astarasikov/qemu.git",
+    "revision": "1a8fe06391faad11746b7ffa216d1f5533bc6f02",
+    "version": "0.10.50",
+    "license": "GPL-2.0, retain donor notices",
+    "retained_manifest": "../../tools/research/full_system_20261007/source_manifest.json"
+  },
+  "cerf_reference": {
+    "repository": "https://github.com/gweslab/cerf.git",
+    "revision": "6f1a5449804bbad0f13a56a59ae3fcf1ae61cc91",
+    "license": "MIT with dependency notices; source reference only initially"
+  },
+  "rom": {
+    "path": "../../PC windows mobile 6 Files/Roms and files/pocket pc/Deviceemulation/0409/PPC_USA.BIN",
+    "bytes": 100663296,
+    "sha256": "b6ca519070e84da0bf6886fb3bde606ce098a0cfaffff436b8faf46a9a580bf7",
+    "access": "read-only"
+  },
+  "production_reference": {
+    "version": "6.52",
+    "source": "../../SOURCE/review-v640/Pocket2Droid-V6.40-Clean-Source",
+    "release_scope": "../../apk/6.52/RELEASE_SCOPE.json",
+    "signed_apk_sha256": "f491e563c1db6a62d3be8c952f56ee4556ff39e8138c9bc5b1c92de9de1fd058"
+  },
+  "host": {
+    "distribution": "Ubuntu-24.04 WSL",
+    "architecture": "x86_64",
+    "compiler": "GCC13.3.0",
+    "guest_fixture_compiler": "Clang17.0.6",
+    "source_cache": "/opt/pocket2droid-tcg-build/source",
+    "build_cache": "/opt/pocket2droid-tcg-build/host",
+    "timing_use": "correctness/development; not Android gameplay performance"
+  }
+}

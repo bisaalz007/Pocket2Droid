@@ -1,0 +1,3 @@
+# Preserve the supplied source and dependency bytes on every platform.
+# Individual upstream diff attributes remain in their original directories.
+* -text

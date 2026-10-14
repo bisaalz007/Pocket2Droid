@@ -1,0 +1,49 @@
+{
+  "files": {
+    "libp2dengine.so": {
+      "sha256": "6f14392dc0f3299ffc58ac091fe88725191d7f8811412988c50169c81c847f8d",
+      "input_sha256": "11f07251e50168610bd0d552722b034d2186d3c4e0dfe513532ad02a1a4d0bd2",
+      "original_name": "libp2dengine-bionic.so",
+      "symbols_sha256": "494c4b813d260a1527277413e6dee8c44b17a676803c44e073aa6af49eedb2bb"
+    },
+    "libp2d_glib_2_0.so": {
+      "sha256": "cf6bdffbc3544c9885a78f7e84d635f45c43d10481597e735f88735e0c6e866f",
+      "input_sha256": "b287d879d49beebf5200b23211b8341a562a10e32f64ab818fd53f2bc4536c11",
+      "original_name": "libglib-2.0.so.0",
+      "symbols_sha256": "74e3f9d7ca02bf0cd195b2ff534c040662e2058a1f09fd3ef0b37bc331ace28c"
+    },
+    "libp2d_pcre2_8.so": {
+      "sha256": "4ff2552af3d7b4915022b70912277aa36e618e337d315ccd9412bf74b7a681c3",
+      "input_sha256": "52c7ab426f4f274f630d05ef04c852153f4bb7e78ae178ce61cb17e258569bdf",
+      "original_name": "libpcre2-8.so",
+      "symbols_sha256": "a5391f49bb9e1b1da4903173ef5d9b797b5876303c407a92aa2cf9db05f711e4"
+    },
+    "libp2d_iconv.so": {
+      "sha256": "7712abeaffcbd68f165b3672cefedbafb0e0c35769a1222fd153233abcbc0f7f",
+      "input_sha256": "aa51a75a69449e02f7712635148b280167dcbda9433f1d16de5c931432b05b01",
+      "original_name": "libiconv.so",
+      "symbols_sha256": "49427e13eae51e3618df84da131ff6ff97908ab88427ca40111dafb0f7b65cd7"
+    },
+    "libp2d_android_support.so": {
+      "sha256": "d953cead05bce5e483a23e9a641d84c03e03417e11bdb5bf5dce7666aa55b9d7",
+      "input_sha256": "739cf829511d71dafd6c67fdbb70f3f0c6048642ea2e1967790ee961fde14430",
+      "original_name": "libandroid-support.so",
+      "symbols_sha256": "bafb6c9d60cda48e6382b7ac61dae18d50535471197929c3faaef7198bdf3724"
+    },
+    "libp2d_pixman_1.so": {
+      "sha256": "ac7c49afcb5f5435589d28211b8e368feb2b976f5bfbca8274644613a51a99a1",
+      "input_sha256": "2659cf1698d60f653203fe4427370f5ef1985fddaebfabb7b8858a7d8c72aac0",
+      "original_name": "libpixman-1.so",
+      "symbols_sha256": "3306a98a7093c00a8d10cec454afffcd165e9ba06a0fa5bc39167f0c520df335"
+    },
+    "libp2d_z.so": {
+      "sha256": "abdc198d1fdc2286ab3266a45b86e5de2c7e3569440a2fe08704e3333a10ed52",
+      "input_sha256": "c47748ed4b6ca6a2ecd664bab04795f3493956ab1f5cddc4ba0efa737ef3b711",
+      "original_name": "libz.so.1",
+      "symbols_sha256": "2db3be100a8169028fb4e95979fd28cb9eefc9b8d2f5d3b42df8796c3a80bbcb"
+    }
+  },
+  "native_engine_record_sha256": "f9cdc74a1145efa8ca484157ae51e83fba9eaecf8233b6ae13277ac8c4c65908",
+  "packager_sha256": "1827a03c009bdaf8d7274ba7b9d992dca796fac2763257a9d591de9f570b4db1",
+  "tools_record_sha256": "738d268c0b211d91c9beb0a78d8b084d3dedc9e1fa49c530caf2207141cd2890"
+}

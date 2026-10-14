@@ -1,0 +1,64 @@
+# Android TCG frontend decision - 2026-10-08
+
+Authorized: full Windows Mobile Android frontend, controls, isolated persistence
+and cheap visible FPS counter. Highest reasoning and independent review used.
+Original V6.52 source, signer, ROM, saves and Storage Card are protected.
+
+REJECT static Linux/glibc executable inside an Android app: actual launch exited
+SIGSYS159. KEEP real Android/Bionic API24 executable built with official NDKr30,
+minimal QEMU arm-softmmu and six closed Android dependencies. Exact base/source/
+recipe/tool/dependency hashes archived. Scoped published Termux heap-tag/setjmp
+workarounds; private TMPDIR shared-memory fallback; private SONAMEs/$ORIGIN,
+linker64 and16KiB ELF/APK alignment verified. Actual app boots full96MiB WM Today.
+
+Java owns UI/control/lifecycle; QEMU owns CPU/MMU/devices. Frontend required no
+new guest CPU changes. Executable is installed in extracted APK code directory.
+Private Unix QMP; no internet permission/network endpoint. ARGB8888 shared-file
+frames use nonblocking producer-exclusive/consumer-shared fcntl locks. Producer
+and display pump16ms. Changed images only; sequence advances on complete publish.
+
+Display FPS counts changed-image Android posts. Duplicate redraws, skipped source
+images and surface recreation do not inflate it. Partial LCD scanout can still
+change an image, so Game FPS remains unknown. About60-62posts/s in actual test
+race is NOT exact game FPS or a matched V6.52 multiplier.
+
+Counter: O(1) frontend accounting, no guest hooks, extra framebuffer scans or
+per-frame logs. Text <=2updates/s, changed values only. Off disables accounting
+and UI callbacks; pause cancels callbacks. Actual phone ART accounting+clock
+36.85/36.87/37.22ns per presentation. Sequential same-running-game8s windows:
+main UI thread10ms counter-on, below10ms resolution off (100Hz ticks). On-window
+UI9frames, zero jank, GPU histogram1-2ms. Scoped evidence, no universal zero-cost
+or identical-game-FPS promise.
+
+Single scheduled worker owns QMP/state/cleanup. Writable storage FD retained
+before child dirtying, checked fsync after stop/exit. Earlier sync failure remains
+visible. Shutdown timeout retains ownership and blocks unsafe restart. Exit
+callback validates current owner. Home releases input/stops/flushes; resume
+continues same process. Parent death stops child. Process restart cold-boots ROM
+with new32MiB RAM-FMD; no legacy CPU/RAM conversion or old state overwrite.
+
+Mapped touch, onscreen arrows/Tab/Esc and hardware navigation work. Actual game
+needs buttons for menus. Quick make/break can escape polling, so100ms asynchronous
+minimum starts after down acknowledgement. Rapid re-presses coalesce; pause
+releases immediately; stale callbacks cannot release renewed holds. Actual Engine
+Android-runtime tests cover delayed ack/rapid tap/due-release-before-pause races.
+Ordinary quick taps now select sound off and start actual Quick Race.
+
+Verified: frame/lock tests, Java frame/rate tests,13device+5import+3keyboard host
+regressions; host full-WM display/stop/fsync/owner exclusion/reopen/parent death;
+actual Bionic app boot, installed-game cold reopen, touch/keys, race, FPS toggle,
+Home/resume/normal Exit. Independent scoped review clear after lifecycle/input
+and source-identity corrections. Android app execution is now demonstrated.
+
+CandidateV6.53/code653: original package/signer, minSdk24/target36, nondebuggable,
+exact V6.52 library retained behind Previous engine. New private tcg-v1 storage.
+Signed candidate packaging/verification3.377s using native/Java/dex/resource cache
+(native compilation excluded). Disposable debuggable app is separate and cannot
+launch Previous engine. Exact Android native source, support/dependency inputs,
+symbol companions and release identities archived alongside APK.
+
+Remaining: sound output disabled; legacy save conversion absent; general text
+keyboard/device modes and broad compatibility unproven. No full-speed product
+acceptance or exact game FPS. Next: user's independent gameplay check of this
+combined candidate. Reuse evidence before another build; reassess a concrete
+bottleneck if gameplay disappoints.

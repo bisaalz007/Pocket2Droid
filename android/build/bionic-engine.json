@@ -1,0 +1,50 @@
+{
+  "binary_sha256": "11f07251e50168610bd0d552722b034d2186d3c4e0dfe513532ad02a1a4d0bd2",
+  "source": {
+    "base": "f9587d4045c67cd0d8d8bdcd5d0bb5b6b395b63c",
+    "paths": {
+      "configs/devices/arm-softmmu/p2d.mak": "4c93cbcb483e263c4e3c16614b89a17ecba959641814a3f3490b04fbbe28bdc8",
+      "hw/arm/Kconfig": "5521af3a862d2c83472e234c2a011ff7ec36d9e7df107de13767d6d42396669a",
+      "hw/arm/meson.build": "f8387b49dea1d04f121be0c54fba026e116d687caba4a3eeb11fd3b59a167c87",
+      "hw/arm/pocket2droid-devemu.c": "144131caa6dca4d4b88f3bd094ba41e97453f04c9181b1c69212b6183c8296ad",
+      "hw/display/meson.build": "2177a012fc70b94448ca50c919c569f148c408e0629ccb721812d3d6574c9eb1",
+      "hw/display/p2d-devemu-lcd.c": "06ede05d1cc43a83591a173b916fc93e9f9cbfcce3886dd74cc83956e1adeed2",
+      "hw/display/p2d-frame.c": "21eabd0b3ee229619c5220ac8d257a3f99b7067be479c679be00eff38bb1d4b1",
+      "hw/dma/meson.build": "959487400817c6b6a253cf2e18ba898fbf41559282ea0e54df9a5cb07b569de6",
+      "hw/dma/p2d-audio.c": "87d6ebd4ff27de628708f85d892740c2a2e3a69f61caf8d5e8c071c79500c4ab",
+      "hw/dma/p2d-iis-dma.c": "3e3b5c0120873989519e5ad05522d56627831743fd605314d8be9d1beea63a00",
+      "hw/misc/meson.build": "054894b78db559069cf68d72be99c0f9fa3310558785575a399850fbd7738aa4",
+      "hw/misc/p2d-devemu-import.c": "800f0489ace996b6689118dc295d6709921dc7afdf500fe1a116db7c9fa61144",
+      "hw/misc/p2d-devemu-services.c": "dee43f9a3d2889acd97193b88a885df44ed0bbd2a7f9363748bb8adf362031a7",
+      "hw/misc/p2d-folder-move.h": "db94266b5073cb92bbe7d6a2e2331a9117799f4a789a32dd65ad5cc99ef88ee4",
+      "include/hw/arm/p2d-audio.h": "c6a13b6fa1db2e11287e408d150fd00a64135656216d614aeb586a30339eb56a",
+      "include/hw/arm/p2d-frame.h": "916dd1e5ae95b807bb3e7ad376a9b14ba3ebd9f94a81a6a5fe60ff6d96db0801",
+      "include/hw/arm/p2d-import.h": "369de921daf03a1d95e250bc4f92521e5d0551465d009b877a8dafd3bda687be",
+      "include/hw/arm/pocket2droid-devemu.h": "2b21cbc9bbb55e4c2def222d23520f76b7bd8fdb356920befa267740b80f27ae",
+      "include/qemu/timer.h": "9187ecdfaa72012ce23620a85f912a2ea06432eb17c356afa93a403440482cbc",
+      "target/arm/cpu.h": "9513f9381de3ccd3c73d83fd44c21350cd3a2a49998810bd99f17f575fce35bd",
+      "target/arm/helper.c": "b413da13c83329e1aa7333a3b7afc6ef89b283e68acb5fecaae53ef9cfd26df1",
+      "target/arm/tcg/cpu32.c": "46e8cf2e18d877c648c3847e413fc5f317d20f25f3aa008410d0b445dabecce4",
+      "target/arm/tcg/helper-defs.h": "86bea8044472619e57c6abac8999b285766fa62a14f99bf9ff370a125eab65cf",
+      "target/arm/tcg/op_helper.c": "976e185034c87996d938c0b4c571236a09cd1703739b85bb5df6eedf098434b8",
+      "target/arm/tcg/tlb_helper.c": "32ea2ec474ee81436834850265e65c1e12331c861acab31004232596e4115cb0",
+      "target/arm/tcg/translate.c": "e5e2296c1c310f4257e016276c414623d1757cf070fece63560ffa62a1f96c20",
+      "target/arm/tcg/translate.h": "a31502e6f787c774bd259ceb5e8aa5840bf563ffa8809e61a4d98fc120bb055f",
+      "util/qemu-timer.c": "4f137f2d03ae5bc96fcd36d5c1a8854391b5acfd5648abdd5a525b3e25c4ac27"
+    }
+  },
+  "platform": "Android/Bionic API24 executable",
+  "termux_patch_sha256": "fc410dfe6e504909f30aaf95439c2c9bfe2f1c5cdba59a9a1cfa71032cc16a09",
+  "builder_sha256": "ae67598edb049532148999b681f39125a6da1c9b099d560f4d6a4d76207189ec",
+  "support_sources": {
+    "private-bionic_asm.h": "253d038709ce871463ae47aa4b339476074fde22e8aff5ab241da9d2b7b582fb",
+    "private-bionic_asm_arm64.h": "c1c141e1463072e8181fd13936a99edb1599486904a3876bf981aa322a6f3ccc",
+    "private-bionic_constants.h": "01b23741b59009da0520240e97b2dacd34b3eca28484a5188f027fb2aeab4888",
+    "setjmp.S": "1dd781c7d9d132c265109f0ad766a291107c2f9211be2df7aeed28071c75ff0e"
+  },
+  "runtime_source_hashes": {
+    "system/vl.c": "4e2eef7ac3754d2d189d255960fd7b63a89282c36d7329ff3e132ab456ffb8f3",
+    "meson.build": "b1d316e156df05fbe47fac38f46fd5e9c3a9043f40c5f57e58a6b7525bb0770b",
+    "util/oslib-posix.c": "38bf982d4f6011784a7a20dcaf28e9647bed13e5a915ab89c26d5e44aeef4511"
+  }
+}

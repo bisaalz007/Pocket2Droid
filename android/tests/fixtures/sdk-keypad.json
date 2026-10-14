@@ -1,0 +1,18 @@
+{
+  "revision": "0f23982a1047b1b2d0dcebe7d9d82ac09a29b63f",
+  "source": "boards/smdk2410/vktoscan.c + devices.cpp onWMKEY",
+  "sequences": {
+    "0": {"make": [73], "break": [201], "guest_vk": 48},
+    "1": {"make": [49], "break": [177], "guest_vk": 49},
+    "2": {"make": [57], "break": [185], "guest_vk": 50},
+    "3": {"make": [47], "break": [175], "guest_vk": 51},
+    "4": {"make": [55], "break": [183], "guest_vk": 52},
+    "5": {"make": [63], "break": [191], "guest_vk": 53},
+    "6": {"make": [71], "break": [199], "guest_vk": 54},
+    "7": {"make": [79], "break": [207], "guest_vk": 55},
+    "8": {"make": [87], "break": [215], "guest_vk": 56},
+    "9": {"make": [65], "break": [193], "guest_vk": 57},
+    "f8": {"make": [99,87,227], "break": [99,215,227], "guest_vk": 119},
+    "f9": {"make": [99,65,227], "break": [99,193,227], "guest_vk": 120}
+  }
+}

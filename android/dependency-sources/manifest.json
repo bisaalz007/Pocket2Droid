@@ -1,0 +1,275 @@
+{
+  "purpose": "Additive source and notice supplement for Pocket2Droid v1.0 native dependency inputs",
+  "termux_revision": "2f316bba7e393bde8186ebb6150a54dca1793eb8",
+  "termux_archive": {
+    "url": "https://codeload.github.com/termux/termux-packages/tar.gz/2f316bba7e393bde8186ebb6150a54dca1793eb8",
+    "sha256": "b5b9b02046b285090abaddc29693d36d547f4997fce4b4374ba3709366bbae67",
+    "filename": "termux-packages-2f316bba7e393bde8186ebb6150a54dca1793eb8.tar.gz"
+  },
+  "source_archives": [
+    {
+      "package": "glib",
+      "version": "2.90.0",
+      "filename": "glib-2.90.0.tar.xz",
+      "url": "https://download.gnome.org/sources/glib/2.90/glib-2.90.0.tar.xz",
+      "sha256": "17d15cac2af80a33271127408e0abc2748eb297c595c2a26409e81e14e7d1b8f",
+      "repository_path": "android/dependency-sources/archives/glib-2.90.0.tar.xz",
+      "bytes": 5830480
+    },
+    {
+      "package": "libiconv",
+      "version": "1.19",
+      "filename": "libiconv-1.19.tar.gz",
+      "url": "https://mirrors.kernel.org/gnu/libiconv/libiconv-1.19.tar.gz",
+      "sha256": "88dd96a8c0464eca144fc791ae60cd31cd8ee78321e67397e25fc095c4a19aa6",
+      "repository_path": "android/dependency-sources/archives/libiconv-1.19.tar.gz",
+      "bytes": 5921103
+    },
+    {
+      "package": "libpixman",
+      "version": "0.46.4-1",
+      "filename": "pixman-0.46.4.tar.gz",
+      "url": "https://cairographics.org/releases/pixman-0.46.4.tar.gz",
+      "sha256": "d09c44ebc3bd5bee7021c79f922fe8fb2fb57f7320f55e97ff9914d2346a591c",
+      "repository_path": "android/dependency-sources/archives/pixman-0.46.4.tar.gz",
+      "bytes": 827198
+    },
+    {
+      "package": "pcre2",
+      "version": "10.49",
+      "filename": "pcre2-10.49.tar.bz2",
+      "url": "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.49/pcre2-10.49.tar.bz2",
+      "sha256": "53c156e1ba416a20da8e65395daa132da0d80e76910424caca3fcdae7831d384",
+      "repository_path": "android/dependency-sources/archives/pcre2-10.49.tar.bz2",
+      "bytes": 2185271
+    },
+    {
+      "package": "zlib",
+      "version": "1.3.2",
+      "filename": "zlib-1.3.2.tar.xz",
+      "url": "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.xz",
+      "sha256": "d7a0654783a4da529d1bb793b7ad9c3318020af77667bcae35f95d0e42a792f3",
+      "repository_path": "android/dependency-sources/archives/zlib-1.3.2.tar.xz",
+      "bytes": 1320064
+    },
+    {
+      "package": "libandroid-support",
+      "version": "29-1",
+      "filename": "libandroid-support-29.tar.gz",
+      "url": "https://github.com/termux/libandroid-support/archive/refs/tags/v29.tar.gz",
+      "sha256": "8f74ce0f9cf70ec29f548696c248cac0ba560a2d8916a0fe1cf9316d5f167a80",
+      "repository_path": "android/dependency-sources/archives/libandroid-support-29.tar.gz",
+      "bytes": 12699
+    },
+    {
+      "package": "libandroid-support",
+      "version": "29-1",
+      "filename": "wcwidth-4.tar.gz",
+      "url": "https://github.com/termux/wcwidth/archive/refs/tags/v4.tar.gz",
+      "sha256": "08489e00f797ffb3b71f9c1894c83e5ebe12c90a2ee0e1f9dc7c6eb29a2ff1a8",
+      "repository_path": "android/dependency-sources/archives/wcwidth-4.tar.gz",
+      "bytes": 12096
+    }
+  ],
+  "recipes": [
+    {
+      "package": "glib",
+      "git_blob_sha1": "0a3ab5263b41097b705fe731624deba7e456a4b7",
+      "source_url": "https://github.com/termux/termux-packages/blob/2f316bba7e393bde8186ebb6150a54dca1793eb8/packages/glib/build.sh",
+      "repository_path": "android/dependency-sources/recipes/glib/build.sh"
+    },
+    {
+      "package": "libiconv",
+      "git_blob_sha1": "313c932a8325b8b2fa72164c9c82feb58c6e80c7",
+      "source_url": "https://github.com/termux/termux-packages/blob/2f316bba7e393bde8186ebb6150a54dca1793eb8/packages/libiconv/build.sh",
+      "repository_path": "android/dependency-sources/recipes/libiconv/build.sh"
+    },
+    {
+      "package": "libpixman",
+      "git_blob_sha1": "6812d0f381d47305b9ca5b19571ec056eec1d8b3",
+      "source_url": "https://github.com/termux/termux-packages/blob/2f316bba7e393bde8186ebb6150a54dca1793eb8/packages/libpixman/build.sh",
+      "repository_path": "android/dependency-sources/recipes/libpixman/build.sh"
+    },
+    {
+      "package": "pcre2",
+      "git_blob_sha1": "3150b8d371bd865d978e222983bf058b42daa2bd",
+      "source_url": "https://github.com/termux/termux-packages/blob/2f316bba7e393bde8186ebb6150a54dca1793eb8/packages/pcre2/build.sh",
+      "repository_path": "android/dependency-sources/recipes/pcre2/build.sh"
+    },
+    {
+      "package": "zlib",
+      "git_blob_sha1": "675bd3b231f3021bec5fd133040c08920ab15c62",
+      "source_url": "https://github.com/termux/termux-packages/blob/2f316bba7e393bde8186ebb6150a54dca1793eb8/packages/zlib/build.sh",
+      "repository_path": "android/dependency-sources/recipes/zlib/build.sh"
+    },
+    {
+      "package": "libandroid-support",
+      "git_blob_sha1": "71f45beabeb021f21ec172b0db002ae0aa926542",
+      "source_url": "https://github.com/termux/termux-packages/blob/2f316bba7e393bde8186ebb6150a54dca1793eb8/packages/libandroid-support/build.sh",
+      "repository_path": "android/dependency-sources/recipes/libandroid-support/build.sh"
+    }
+  ],
+  "binary_input_correspondence": {
+    "libp2d_glib_2_0.so": {
+      "package": "glib",
+      "member": "./data/data/com.termux/files/usr/lib/libglib-2.0.so.0.9000.0",
+      "sha256": "b287d879d49beebf5200b23211b8341a562a10e32f64ab818fd53f2bc4536c11"
+    },
+    "libp2d_android_support.so": {
+      "package": "libandroid-support",
+      "member": "./data/data/com.termux/files/usr/lib/libandroid-support.so",
+      "sha256": "739cf829511d71dafd6c67fdbb70f3f0c6048642ea2e1967790ee961fde14430"
+    },
+    "libp2d_iconv.so": {
+      "package": "libiconv",
+      "member": "./data/data/com.termux/files/usr/lib/libiconv.so",
+      "sha256": "aa51a75a69449e02f7712635148b280167dcbda9433f1d16de5c931432b05b01"
+    },
+    "libp2d_pixman_1.so": {
+      "package": "libpixman",
+      "member": "./data/data/com.termux/files/usr/lib/libpixman-1.so",
+      "sha256": "2659cf1698d60f653203fe4427370f5ef1985fddaebfabb7b8858a7d8c72aac0"
+    },
+    "libp2d_pcre2_8.so": {
+      "package": "pcre2",
+      "member": "./data/data/com.termux/files/usr/lib/libpcre2-8.so",
+      "sha256": "52c7ab426f4f274f630d05ef04c852153f4bb7e78ae178ce61cb17e258569bdf"
+    },
+    "libp2d_z.so": {
+      "package": "zlib",
+      "member": "./data/data/com.termux/files/usr/lib/libz.so.1.3.2",
+      "sha256": "c47748ed4b6ca6a2ecd664bab04795f3493956ab1f5cddc4ba0efa737ef3b711"
+    }
+  },
+  "notice_files": [
+    {
+      "path": "android/dependency-licenses/libandroid-support/LICENSE.txt",
+      "sha256": "76fc4416b6b20b4223bee8cc5b1ab41e1066a55ee23454f857c74bfbd9c3c2d5",
+      "bytes": 6126
+    },
+    {
+      "path": "android/dependency-licenses/libandroid-support/LICENSE.txt.1",
+      "sha256": "80786a6b45d7dc1a4e604c85f779af6b1069bf900eda37684045463d81627314",
+      "bytes": 2589
+    },
+    {
+      "path": "android/dependency-licenses/libpixman/copyright",
+      "sha256": "fac9270f0987b96ff4533fca3548c633e02083cbba4a0172a3b149b2e4019793",
+      "bytes": 2087
+    },
+    {
+      "path": "android/dependency-licenses/pcre2/COPYING",
+      "sha256": "99272c55f3dcfa07a8a7e15a5c1a33096e4727de74241d65fa049fccfdd59507",
+      "bytes": 97
+    },
+    {
+      "path": "android/dependency-licenses/pcre2/copyright",
+      "sha256": "99272c55f3dcfa07a8a7e15a5c1a33096e4727de74241d65fa049fccfdd59507",
+      "bytes": 97
+    },
+    {
+      "path": "android/dependency-licenses/pcre2/copyright.1",
+      "sha256": "197d8a73ffee0d6b09adba2f9c677b5f5aede24edf89258a68e48248d010d811",
+      "bytes": 4011
+    },
+    {
+      "path": "android/dependency-licenses/zlib/copyright",
+      "sha256": "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2",
+      "bytes": 1002
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/AFL-2.0.txt",
+      "sha256": "7ecc7db84298adb05d2cf10339c63a5315a1c5c270a68d97d7d40a53b508ccde",
+      "bytes": 8987
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/Apache-2.0.txt",
+      "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff",
+      "bytes": 10280
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/CC-BY-SA-3.0.txt",
+      "sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f",
+      "bytes": 22240
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/CC0-1.0.txt",
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "bytes": 7048
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/GPL-2.0-or-later.txt",
+      "sha256": "aaf135472f81c5b4a0dca9367e5bb5e9750032b5bebe5442b36e4c0a47430df3",
+      "bytes": 17337
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/LGPL-2.1-only.txt",
+      "sha256": "fa6f36630bb1e0c571d34b2bbdf188d08495c9dbf58f28cac112f303fc1f58fb",
+      "bytes": 25967
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/LGPL-2.1-or-later.txt",
+      "sha256": "fa6f36630bb1e0c571d34b2bbdf188d08495c9dbf58f28cac112f303fc1f58fb",
+      "bytes": 25967
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/LLVM-exception.txt",
+      "sha256": "e34c58338bd89d43e709e226610d8f32b3e3c47f4ad9a99a8dc1d4ac7842488e",
+      "bytes": 919
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/LicenseRef-old-glib-tests.txt",
+      "sha256": "fb261b2d5dbe76c4850f90da763210bc385e52428df6bbfd7b06295ac8a32914",
+      "bytes": 841
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/MIT.txt",
+      "sha256": "b85dcd3e453d05982552c52b5fc9e0bdd6d23c6f8e844b984a88af32570b0cc0",
+      "bytes": 1078
+    },
+    {
+      "path": "android/dependency-licenses/glib/LICENSES/MPL-1.1.txt",
+      "sha256": "6214f8b1300bb9f37b16ebc146f8f61af0187e0025042ff95c8b3030744a8795",
+      "bytes": 23669
+    },
+    {
+      "path": "android/dependency-licenses/glib/docs/reference/COPYING",
+      "sha256": "b1ec1d0e5947f81e815d8771f7d4d90671a94bb10a42dc687fb566de461a57aa",
+      "bytes": 1698
+    },
+    {
+      "path": "android/dependency-licenses/glib/subprojects/gvdb/COPYING",
+      "sha256": "bdbcdaa7858872393e9d6b216bbdc8a23e99d98dd6cdb7cda19458025b9e19fc",
+      "bytes": 26445
+    },
+    {
+      "path": "android/dependency-licenses/libiconv/COPYING.LIB",
+      "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95",
+      "bytes": 26419
+    },
+    {
+      "path": "android/dependency-licenses/libiconv/libcharset/COPYING.LIB",
+      "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95",
+      "bytes": 26419
+    },
+    {
+      "path": "android/dependency-licenses/libiconv/COPYING",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "bytes": 35147
+    },
+    {
+      "path": "android/dependency-licenses/termux-packages/LICENSE.md",
+      "sha256": "e86f899e394c692ce10dff53614f93ce473f02cddb4d88c5d49cb0c728ba5f68",
+      "bytes": 565
+    }
+  ],
+  "evidence_limits": [
+    "The frozen binary inputs match the six packaged libraries before ELF renaming/stripping.",
+    "Recipe package versions and upstream source checksums match the frozen binary package versions.",
+    "The exact original Termux binary-build commit was not retained; this recipe snapshot matches versions but is not a bit-reproducible build proof.",
+    "No source in this supplement was executed or used to rebuild the APK.",
+    "This supplement does not resolve Microsoft reference lineage or claim complete legal clearance.",
+    "The Android build portability gaps described in BUILDING.md remain."
+  ],
+  "complete_distribution_review": false
+}

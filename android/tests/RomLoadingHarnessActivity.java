@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import android.app.*;import android.os.*;import android.graphics.Color;import android.view.*;import android.widget.*;
 import java.io.*;import java.nio.*;import java.nio.channels.*;
 /** Owned private frame fixture; Engine.start is never called. */

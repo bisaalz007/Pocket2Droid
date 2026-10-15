@@ -32,7 +32,7 @@ int p2d_test_fsync(int fd)
     }
     return fsync(fd);
 }
-JNIEXPORT void JNICALL Java_com_samthedev_pocket2droid_StorageFallbackTest_directoryFault
+JNIEXPORT void JNICALL Java_com_samsixx_pocket2droid_StorageFallbackTest_directoryFault
     (JNIEnv *env,jclass type,jstring path,jint fault,jint nth)
 {
     (void)type;
@@ -63,6 +63,6 @@ ssize_t p2d_test_write(int fd, const void *bytes, size_t count)
     if (result>0 && fail_after>0) fail_after-=result;
     return result;
 }
-JNIEXPORT void JNICALL Java_com_samthedev_pocket2droid_StorageFallbackTest_failAfter
+JNIEXPORT void JNICALL Java_com_samsixx_pocket2droid_StorageFallbackTest_failAfter
     (JNIEnv *env,jclass type,jlong bytes)
 { (void)env; (void)type; fail_after=bytes; }

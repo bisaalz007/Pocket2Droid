@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 public final class SessionMessagesTest {
     public static void main(String[] args){
         for(String value:new String[]{"Sound disabled: Wrong audio buffer size","Sound disabled: invalid PCM","Sound disabled: incomplete stereo write","Sound: unsupported guest IIS format","Engine error: permission denied","Engine exited (code 1); see engine.log","Storage sync/close error: failed","Sound shutdown pending; restart blocked"})

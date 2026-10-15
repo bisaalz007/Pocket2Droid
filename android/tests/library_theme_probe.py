@@ -3,7 +3,7 @@ import json,re,time
 from library_pc_probe import shell,capture,node,tap,bounds,B,PKG,scroll_to,snapshot
 def main():
  assert shell('getprop ro.kernel.qemu').strip()=='1'
- shell(f'am start -W -n {PKG}/com.samthedev.pocket2droid.MainActivity');time.sleep(.4)
+ shell(f'am start -W -n {PKG}/com.samsixx.pocket2droid.MainActivity');time.sleep(.4)
  current=snapshot()
  if any(n.get('content-desc')=='Emulated display' for n in current.iter('node')):
   shell('input keyevent 4');tap(snapshot(),'Exit');time.sleep(.5)
@@ -11,7 +11,7 @@ def main():
  try:
   for mode in ('yes','no'):
    shell('cmd uimode night '+mode);time.sleep(.4)
-   shell(f'am start -W -n {PKG}/com.samthedev.pocket2droid.MainActivity');time.sleep(.4)
+   shell(f'am start -W -n {PKG}/com.samsixx.pocket2droid.MainActivity');time.sleep(.4)
    tree=capture('pc-theme-'+mode+'-library');assert not any(n.get('text')=='ROM library' for n in tree.iter('node'))
    hint=node(tree,'Tap to start · Hold for options');a,b,c,d=bounds(hint);assert d-b<=28,'Footer is not compact'
    fixture=next(n.get('text') for n in tree.iter('node') if n.get('text','').startswith('UI_TEST_') and not n.get('text','').endswith('.BIN'))

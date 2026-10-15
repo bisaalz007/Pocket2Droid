@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +42,7 @@ public final class StorageLayoutTest {
         File general=base.resolve("isolation/shared").toFile(),appSpecific=base.resolve("isolation/test-app-external").toFile();
         File testRoot=StorageLayout.rootForPackage("com.samsixx.p2dtest",general,appSpecific);
         require(testRoot.equals(new File(general,".p2d-disposable-frontend/pocket2droid")),"Disposable package uses a reserved directory on the same general shared FUSE volume as production");
-        require(StorageLayout.rootForPackage("com.samthedev.pocket2droid",general,appSpecific).equals(new File(general,"pocket2droid")),
+        require(StorageLayout.rootForPackage("com.samsixx.pocket2droid",general,appSpecific).equals(new File(general,"pocket2droid")),
             "Production package retains requested shared root");
         StorageLayout isolated=new StorageLayout(testRoot,base.resolve("isolation/test-private/tcg-v1").toFile());
         isolated.prepare();

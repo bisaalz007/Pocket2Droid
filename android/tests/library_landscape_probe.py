@@ -4,7 +4,7 @@ from library_pc_probe import shell,capture,node,tap,bounds,B,PKG,scroll_to
 
 def main():
     assert shell('getprop ro.kernel.qemu').strip()=='1'
-    shell(f'am start -W -n {PKG}/com.samthedev.pocket2droid.MainActivity');time.sleep(.3)
+    shell(f'am start -W -n {PKG}/com.samsixx.pocket2droid.MainActivity');time.sleep(.3)
     tree=capture('pc-landscape-library')
     if any(n.get('content-desc')=='Emulated display' for n in tree.iter('node')):
         shell('input keyevent 4');tap(capture('pc-landscape-initial-exit'),'Exit');time.sleep(.5)

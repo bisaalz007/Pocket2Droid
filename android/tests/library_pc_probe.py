@@ -41,9 +41,9 @@ def main():
     adb('push',str(HERE/'build/audio-tests/audio-art.jar'),owned+'/tests.jar');adb('push',str(helper),owned+'/libp2dstorage.so')
     for test in ('EngineKeyTest','AudioPlayerArtTest','InsetBackdropArtTest'):
         dest=owned+'/'+test;shell('mkdir '+dest)
-        out=shell('CLASSPATH='+owned+'/tests.jar app_process -Djava.library.path='+owned+' /system/bin com.samthedev.pocket2droid.'+test+' '+dest)
+        out=shell('CLASSPATH='+owned+'/tests.jar app_process -Djava.library.path='+owned+' /system/bin com.samsixx.pocket2droid.'+test+' '+dest)
         (B/(test+'-art.log')).write_text(out);assert 'PASS' in out,out
-    shell(f'am start -W -n {PKG}/com.samthedev.pocket2droid.MainActivity');time.sleep(1)
+    shell(f'am start -W -n {PKG}/com.samsixx.pocket2droid.MainActivity');time.sleep(1)
     initial=capture('pc-library');node(initial,'Add ROM');node(initial,'App settings')
     tap(initial,'App settings');settings=capture('pc-app-settings');node(settings,'Sound');node(settings,'Enable fullscreen');node(settings,'Enable on-screen keys')
     for title,value in [('Display FPS counter',True),('Enable fullscreen',False),('Enable on-screen keys',True)]:
@@ -55,7 +55,7 @@ def main():
     name='UI_TEST_'+uuid.uuid4().hex[:6]+'.BIN';label=name[:-4];root='/sdcard/.p2d-disposable-frontend/pocket2droid'
     shell('mkdir -p '+root+'/Roms '+root+'/data/'+name);local=B/'idle-ui.bin';local.write_bytes(bytes.fromhex('feffffea'));adb('push',str(local),root+'/Roms/'+name)
     shell('truncate -s 33554432 '+root+'/data/'+name+'/ram-fmd.bin')
-    shell(f'am force-stop {PKG}');shell(f'am start -W -n {PKG}/com.samthedev.pocket2droid.MainActivity');time.sleep(.5)
+    shell(f'am force-stop {PKG}');shell(f'am start -W -n {PKG}/com.samsixx.pocket2droid.MainActivity');time.sleep(.5)
     listing=capture('pc-library-with-rom');node(listing,label);tap(listing,label,True);options=capture('pc-rom-popup');node(options,'Settings');tap(options,'Settings');rom_settings=capture('pc-rom-settings');node(rom_settings,'Start');node(rom_settings,'Display name')
     tap(rom_settings,'Guest resolution');resolutions=capture('pc-resolution-options');assert not any(n.get('text')=='ROM default' for n in resolutions.iter('node'));node(resolutions,'QVGA (240×320)');tap(resolutions,'Square VGA (480×480)');time.sleep(.3)
     selected=snapshot();assert any(n.get('text','').startswith('Square VGA (480×480)') for n in selected.iter('node'))
@@ -73,7 +73,7 @@ def main():
     shell('input keyevent 4');menu=snapshot();tap(menu,'On-screen keys');no_keys=capture('pc-fullscreen-no-keys');assert not any(n.get('text')=='TAB' for n in no_keys.iter('node'))
     shell('input keyevent 4');menu=snapshot();tap(menu,'Display FPS counter');no_overlays=capture('pc-fullscreen-no-overlays');assert not any('Display FPS' in n.get('text','') for n in no_overlays.iter('node'))
     shell('input keyevent 4');menu=snapshot();tap(menu,'On-screen keys');keys_only=capture('pc-fullscreen-keys-only');node(keys_only,'TAB')
-    shell('input keyevent 3');time.sleep(.2);shell(f'am start -W -n {PKG}/com.samthedev.pocket2droid.MainActivity');time.sleep(.3);active=capture('pc-paused-library');resume=next((n for n in active.iter('node') if n.get('text')=='Resume active ROM'),None)
+    shell('input keyevent 3');time.sleep(.2);shell(f'am start -W -n {PKG}/com.samsixx.pocket2droid.MainActivity');time.sleep(.3);active=capture('pc-paused-library');resume=next((n for n in active.iter('node') if n.get('text')=='Resume active ROM'),None)
     if resume:tap(active,'Resume active ROM')
     elif not any(n.get('content-desc')=='Emulated display' for n in active.iter('node')):tap(active,label)
     time.sleep(.4);shell('input keyevent 4');menu=snapshot();tap(menu,'Exit');time.sleep(.5);after=capture('pc-after-exit');node(after,'Add ROM')

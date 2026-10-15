@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 

@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import android.content.ContextWrapper;
 import android.content.pm.ApplicationInfo;
 import org.json.*;

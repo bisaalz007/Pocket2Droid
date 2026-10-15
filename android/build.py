@@ -22,7 +22,7 @@ ANDROID = TOOLS / 'android-36/android.jar'
 BASELINE = PROJECT / 'apk/6.52/Pocket2Droid-V6.52-Persistent-JIT-DEV-SIGNED.apk'
 BASELINE_SHA = 'f491e563c1db6a62d3be8c952f56ee4556ff39e8138c9bc5b1c92de9de1fd058'
 VERSION = '1.0'
-VERSION_CODE = 668
+VERSION_CODE = 669
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def module(name, path):
@@ -32,7 +32,7 @@ def module(name, path):
 def manifest_text(test_package=False):
     text = (HERE / 'AndroidManifest.xml').read_text()
     if test_package:
-        text = text.replace('package="com.samthedev.pocket2droid"', 'package="com.samsixx.p2dtest"')
+        text = text.replace('package="com.samsixx.pocket2droid"', 'package="com.samsixx.p2dtest"')
         # Fully qualified source activities also serve the disposable smoke package.
         text = text.replace('<application ', '<application android:debuggable="true" ', 1)
         text = text.replace('android:label="Pocket2Droid"', 'android:label="P2D disposable frontend test"')
@@ -43,7 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--test-package', action='store_true', help='Disposable debuggable smoke package; never a user release')
     args = parser.parse_args()
-    package = 'com.samsixx.p2dtest' if args.test_package else 'com.samthedev.pocket2droid'
+    package = 'com.samsixx.p2dtest' if args.test_package else 'com.samsixx.pocket2droid'
     variant = 'smoke' if args.test_package else 'candidate'
     build = HERE / 'build'; build.mkdir(exist_ok=True)
     started = time.perf_counter()

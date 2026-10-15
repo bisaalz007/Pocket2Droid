@@ -14,7 +14,7 @@ P=HERE.parents[2]
 spec=importlib.util.spec_from_file_location('release_integrity',HERE/'finalize_release.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 m.VERSION,m.VERSION_CODE='6.65',665
-PACKAGE='com.samthedev.pocket2droid'
+PACKAGE='com.samsixx.pocket2droid'
 
 def main():
     previous,release=P/'apk/6.64',P/'apk/6.65'
@@ -52,7 +52,7 @@ def main():
     for name,digest in storage['sources'].items():m.require(m.sha(HERE/name)==digest,'Stale JNI source')
     exports=subprocess.check_output(['nm','-D',str(helper)],text=True)
     for name in ('StoragePublish_publishNoReplace','StoragePublish_copyNoReplace','StoragePublish_syncDirectoryPath'):
-        m.require('Java_com_samthedev_pocket2droid_'+name in exports,'Missing renamed JNI export: '+name)
+        m.require('Java_com_samsixx_pocket2droid_'+name in exports,'Missing renamed JNI export: '+name)
     m.require('Java_com_samsixx_' not in exports and 'p2d_test_' not in exports,'Old/test JNI implementation packaged')
     signature=m.validate_apk(apk,PACKAGE,False,libraries,m.sha(B/'dex/classes.dex'))
     for name,digest in libraries.items():
@@ -125,7 +125,7 @@ def main():
         (stage/'FINAL_VERIFICATION.json').write_text(json.dumps(verification,indent=2)+'\n')
         (stage/'INSTALL.txt').write_text(
             'Pocket2Droid V6.65 (665), ARM64 Android 7.0+ (API24). App label remains Pocket2Droid.\n'
-            'Requested app ID: com.samthedev.pocket2droid. This installs separately from com.samsixx.wm6android.\n'
+            'Requested app ID: com.samsixx.pocket2droid. This installs separately from com.samsixx.wm6android.\n'
             'Normally Exit the older app before opening this build: both can use the shared pocket2droid folder.\n'
             'Do not uninstall, clear data or reset either guest. Allow storage access when Android asks.\n'
             'All ROMs use supplied soft keys/Back/Call/End/Home/D-pad/smaller Select and held overlays.\n'

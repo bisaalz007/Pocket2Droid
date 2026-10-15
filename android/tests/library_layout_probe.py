@@ -7,7 +7,7 @@ def main():
     original_size=shell('wm size');original_density=shell('wm density')
     try:
         shell('wm size 240x320');shell('wm density 160');time.sleep(.5)
-        shell(f'am start -W -n {PKG}/com.samthedev.pocket2droid.MainActivity');time.sleep(.5)
+        shell(f'am start -W -n {PKG}/com.samsixx.pocket2droid.MainActivity');time.sleep(.5)
         tree=capture('pc-library-small')
         controls=[bounds(node(tree,n)) for n in ('Add ROM','Search ROMs','App settings')]
         assert all(0<=a<c<=240 and c-a>=48 and d-b>=48 for a,b,c,d in controls)
@@ -22,7 +22,7 @@ def main():
         shell('wm size '+(size.group(1) if size else 'reset'))
         shell('wm density '+(density.group(1) if density else 'reset'))
         time.sleep(.4)
-        shell(f'am start -W -n {PKG}/com.samthedev.pocket2droid.MainActivity')
+        shell(f'am start -W -n {PKG}/com.samsixx.pocket2droid.MainActivity')
         capture('pc-library-final')
     print('PASS small-screen toolbar geometry; PC size/density restored',flush=True)
 

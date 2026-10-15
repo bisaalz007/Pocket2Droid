@@ -1,8 +1,8 @@
 {
   "binary_path": "build/storage-runtime/libp2dstorage.so",
-  "binary_sha256": "6fe2ad8af89b56684f5262e0d72d9eb2c1dd45edf8d0b6cc1214ccc0232ed67f",
+  "binary_sha256": "099f8cc87951486c5b8d8ac264c272f13f1ef0eb94bf04bc5ed20f16cfc6c294",
   "sources": {
-    "native/storage_publish.c": "3915aac53c9c1ef7f00ef2bb36e3f6b7057fe9b6d40f25701dbbb3a5004376bd"
+    "native/storage_publish.c": "f51856eeb2d854984a8d204a9526a9ebeff04f229c3e348678237a9f44c8b171"
   },
   "builder_sha256": "f8026582b0bd57ccc54ea7d57082a1d21667d5af5654814004c6d08bb1c55dbe",
   "compiler_sha256": "2c82f72dd2090b3f3a1ac2aa84644fd8ebe2afdb4a4bb8700e430766e1acc368",

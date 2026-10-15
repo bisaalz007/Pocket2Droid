@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import android.content.ContextWrapper;
 import java.io.*;
 import java.lang.reflect.*;

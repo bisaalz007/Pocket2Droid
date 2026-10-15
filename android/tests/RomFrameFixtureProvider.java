@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import android.content.*;import android.database.Cursor;import android.net.Uri;import android.os.Bundle;
 import java.io.*;import java.nio.*;import java.nio.channels.*;
 /** Separate owned process, like QEMU: Java in-process locks have different semantics. */

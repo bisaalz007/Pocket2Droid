@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import android.graphics.*;
 public final class InsetBackdropArtTest {
     static void check(boolean value,String message){if(!value)throw new AssertionError(message);}

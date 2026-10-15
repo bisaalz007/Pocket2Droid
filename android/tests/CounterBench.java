@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 
 /** Temporary ART accounting benchmark, never packaged in the user APK. */
 public final class CounterBench {

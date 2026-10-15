@@ -21,7 +21,7 @@ static void error(JNIEnv *env, const char *operation, int saved_errno)
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_samthedev_pocket2droid_StoragePublish_publishNoReplace(JNIEnv *env, jclass type,
+Java_com_samsixx_pocket2droid_StoragePublish_publishNoReplace(JNIEnv *env, jclass type,
                                                          jstring from, jstring to)
 {
     (void)type;
@@ -85,7 +85,7 @@ static int exclusive_copy(const char *source, const char *destination)
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_samthedev_pocket2droid_StoragePublish_copyNoReplace(JNIEnv *env, jclass type,
+Java_com_samsixx_pocket2droid_StoragePublish_copyNoReplace(JNIEnv *env, jclass type,
                                                       jstring from, jstring to)
 {
     (void)type;
@@ -101,7 +101,7 @@ Java_com_samthedev_pocket2droid_StoragePublish_copyNoReplace(JNIEnv *env, jclass
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_samthedev_pocket2droid_StoragePublish_syncDirectoryPath(JNIEnv *env, jclass type,
+Java_com_samsixx_pocket2droid_StoragePublish_syncDirectoryPath(JNIEnv *env, jclass type,
                                                           jstring directory)
 {
     (void)type;

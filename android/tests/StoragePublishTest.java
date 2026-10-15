@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import java.io.*;
 
 /** Root runs this only in a newly created task-owned Android directory. */

@@ -42,7 +42,7 @@ def main():
         assert shell('sha256sum',public+'/Roms/PPC_USA.BIN').split()[0]==originals['ROM']
         record['copied_input_hashes']=originals;record['test_public_root']=public;record['checks']['private_data_only']=True
         shell('appops','set',package,'MANAGE_EXTERNAL_STORAGE','allow')
-        shell('am','start','-n',package+'/com.samthedev.pocket2droid.MainActivity')
+        shell('am','start','-n',package+'/com.samsixx.pocket2droid.MainActivity')
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(record,indent=2)+'\n')
     print(json.dumps({'state':'disposable_sound_app_ready','device':a.device,'model':record['model'],'output':str(a.output)}))
 if __name__=='__main__':main()

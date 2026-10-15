@@ -61,7 +61,9 @@ def main():
     args=ap.parse_args();OUT.mkdir(exist_ok=True)
     if args.action=='prepare':
         assert not adb('shell','pidof','com.samsixx.wm6android',check=False).stdout.strip(), 'Original app still active'
-        assert not adb('shell','pidof','com.samthedev.pocket2droid',check=False).stdout.strip(), 'New app still active'
+        # Prior package can share the same external ROM/storagecard directories.
+        assert not adb('shell','pidof','com.samthedev.pocket2droid',check=False).stdout.strip(), 'Prior-package app still active'
+        assert not adb('shell','pidof','com.samsixx.pocket2droid',check=False).stdout.strip(), 'New app still active'
         present = bool(adb('shell','pm','path',PACKAGE,check=False).stdout.strip())
         if present: owned()
         apk=HERE/'build/Pocket2Droid-V6.53-TCG-SMOKE-SIGNED.apk'
@@ -93,7 +95,7 @@ def main():
             assert actual==digest,actual
             print(kind,'copied and verified')
     elif args.action=='launch':
-        owned();print(adb('shell','am','start','-n',PACKAGE+'/com.samthedev.pocket2droid.MainActivity').stdout.decode())
+        owned();print(adb('shell','am','start','-n',PACKAGE+'/com.samsixx.pocket2droid.MainActivity').stdout.decode())
     elif args.action=='capture': capture(args.value)
     elif args.action=='tap': tap(args.value)
     elif args.action=='log':

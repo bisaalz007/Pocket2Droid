@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 public class ButtonBindingsTest {
  static int checks;static void ok(boolean v){checks++;if(!v)throw new AssertionError("binding "+checks);}
  public static void main(String[]args){

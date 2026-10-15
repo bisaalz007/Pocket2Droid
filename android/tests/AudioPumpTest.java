@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import java.util.*;
 public final class AudioPumpTest {
     static void check(boolean v){if(!v)throw new AssertionError("Playback contract");}

@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 public class RomBootStateTest {
  static int checks;static void check(boolean v){checks++;if(!v)throw new AssertionError("check "+checks);}
  public static void main(String[]args){

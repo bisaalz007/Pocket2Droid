@@ -13,7 +13,7 @@ manifest = ROOT/'AndroidManifest.xml'
 manifest.write_text('''<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.samsixx.p2dforensics" android:versionCode="1" android:versionName="1">
 <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36"/>
 <application android:label="P2D temporary snapshot utility" android:allowBackup="false"/>
-<instrumentation android:name="com.samsixx.p2dforensics.Snapshot" android:targetPackage="com.samthedev.pocket2droid"/>
+<instrumentation android:name="com.samsixx.p2dforensics.Snapshot" android:targetPackage="com.samsixx.pocket2droid"/>
 </manifest>''')
 def run(args): subprocess.run(list(map(str,args)), check=True)
 run(['javac','--release','8','-cp',API,'-d',classes,HERE/'Snapshot.java'])

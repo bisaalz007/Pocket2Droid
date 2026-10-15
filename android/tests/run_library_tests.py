@@ -1,7 +1,7 @@
 """Real Java/JNI filesystem profile tests; no APK or user guest data."""
 from pathlib import Path
 import argparse, os, shutil, subprocess, hashlib
-HERE=Path(__file__).resolve().parents[1];SRC=HERE/'src/com/samthedev/pocket2droid'
+HERE=Path(__file__).resolve().parents[1];SRC=HERE/'src/com/samsixx/pocket2droid'
 p=argparse.ArgumentParser();p.add_argument('--repository',action='store_true');p.add_argument('--settings',action='store_true');p.add_argument('--controls',action='store_true');p.add_argument('--fallback',action='store_true');a=p.parse_args()
 B=HERE/'build/library-tests';B.mkdir(parents=True,exist_ok=True)
 api=Path('/opt/pocket2droid-android-tools/android-36/android.jar')
@@ -23,6 +23,6 @@ cp=str(B/'json.jar')+':'+str(api)
 subprocess.run(['javac','--release','8','-encoding','UTF-8','-cp',cp,'-d',str(B),*map(str,sources+tests)],check=True)
 env=dict(os.environ)
 if a.fallback:env['P2D_TEST_STORAGE_UNSUPPORTED']='1'
-subprocess.run(['java','-Djava.library.path='+str(B),'-cp',str(B)+':'+cp,'com.samthedev.pocket2droid.RomRepositoryTest'],env=env,check=True)
-if a.settings:subprocess.run(['java','-cp',str(B)+':'+cp,'com.samthedev.pocket2droid.RomSettingsTest'],check=True)
-if a.controls:subprocess.run(['java','-cp',str(B)+':'+cp,'com.samthedev.pocket2droid.ControlsTest'],check=True)
+subprocess.run(['java','-Djava.library.path='+str(B),'-cp',str(B)+':'+cp,'com.samsixx.pocket2droid.RomRepositoryTest'],env=env,check=True)
+if a.settings:subprocess.run(['java','-cp',str(B)+':'+cp,'com.samsixx.pocket2droid.RomSettingsTest'],check=True)
+if a.controls:subprocess.run(['java','-cp',str(B)+':'+cp,'com.samsixx.pocket2droid.ControlsTest'],check=True)

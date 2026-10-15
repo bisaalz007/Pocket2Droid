@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import java.io.*;
 import org.json.*;
 public final class RomSettingsTest {

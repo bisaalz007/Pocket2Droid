@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import java.util.*;
 public class MappedInputStateTest {
  static int checks;static void eq(Object a,Object b){checks++;if(!a.equals(b))throw new AssertionError(checks+": "+a+" != "+b);}

@@ -44,7 +44,7 @@ elif a.action=='navigate':
     time.sleep(.7);key('tab');wait('game_mode',(10,111,225,178));time.sleep(.7);key('tab');wait('quick_race',(208,294,238,318),fg=True)
 elif a.action=='sound':click('Sound')
 elif a.action=='home':foreground();call('shell','input','keyevent',3)
-elif a.action=='resume':call('shell','am','start','-n',package+'/com.samthedev.pocket2droid.MainActivity')
+elif a.action=='resume':call('shell','am','start','-n',package+'/com.samsixx.pocket2droid.MainActivity')
 elif a.action=='exit':click('exit')
 if a.action in ('inspect','start','navigate','sound','resume','exit'):
     ns=nodes();texts=[n.get('text') for n in ns if n.get('text')];print(json.dumps(texts))

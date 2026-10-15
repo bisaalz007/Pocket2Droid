@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 public final class AudioSessionTest {
     static void check(boolean b){if(!b)throw new AssertionError("Session gating");}
     public static void main(String[] args){

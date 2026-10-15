@@ -1,4 +1,4 @@
-package com.samthedev.pocket2droid;
+package com.samsixx.pocket2droid;
 import java.util.*;
 public class MappingCaptureTest {
  static int checks;static void ok(boolean v){checks++;if(!v)throw new AssertionError("capture "+checks);}

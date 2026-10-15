@@ -7,7 +7,7 @@ PROJECT=HERE.parents[2]
 API=Path('/opt/pocket2droid-android-tools/android-36/android.jar')
 SDK=API.parent.parent/'android-16'
 ADB=PROJECT/'tools/android-local/sdk/platform-tools/adb'
-PACKAGE='com.samthedev.p2dlifecycle'
+PACKAGE='com.samsixx.p2dlifecycle'
 OUT=HERE/'build/frontend-lifecycle'
 if '--out' in sys.argv:
     OUT=Path(sys.argv[sys.argv.index('--out')+1]).resolve()
@@ -21,9 +21,9 @@ def adb(*args):return run([ADB,'-P','5041','-s','emulator-5580',*args])
 assert adb('shell','getprop','ro.kernel.qemu').strip()=='1','Only the owned PC emulator is allowed'
 assert adb('shell','getprop','sys.boot_completed').strip()=='1','Local Android boot incomplete'
 manifest=OUT/'manifest.xml'
-text=(HERE/'AndroidManifest.xml').read_text().replace('package="com.samthedev.pocket2droid"',f'package="{PACKAGE}"')
+text=(HERE/'AndroidManifest.xml').read_text().replace('package="com.samsixx.pocket2droid"',f'package="{PACKAGE}"')
 text=text.replace('<application ','<application android:debuggable="true" ',1)
-text=text.replace('</manifest>',f'<instrumentation android:name="com.samthedev.pocket2droid.FrontendLifecycleTest" android:targetPackage="{PACKAGE}" /></manifest>')
+text=text.replace('</manifest>',f'<instrumentation android:name="com.samsixx.pocket2droid.FrontendLifecycleTest" android:targetPackage="{PACKAGE}" /></manifest>')
 manifest.write_text(text)
 classes=OUT/('classes-'+LABEL);classes.mkdir(exist_ok=True)
 sources=sorted((HERE/'src').rglob('*.java'))+[HERE/'tests/FrontendLifecycleTest.java']
@@ -43,7 +43,7 @@ if existing:assert owner.exists() and json.loads(owner.read_text())['package']==
 else:owner.write_text(json.dumps({'package':PACKAGE,'serial':'emulator-5580','initially_absent':True}))
 print(adb('install','-r',signed).strip(),flush=True)
 adb('shell','appops','set',PACKAGE,'MANAGE_EXTERNAL_STORAGE','allow' if GRANTED else 'deny')
-result=adb('shell','am','instrument','-w','-e','storage_granted','true' if GRANTED else 'false',PACKAGE+'/com.samthedev.pocket2droid.FrontendLifecycleTest')
+result=adb('shell','am','instrument','-w','-e','storage_granted','true' if GRANTED else 'false',PACKAGE+'/com.samsixx.pocket2droid.FrontendLifecycleTest')
 (OUT/(LABEL+'.log')).write_text(result)
 (OUT/(LABEL+'-sources.json')).write_text(json.dumps({p.relative_to(HERE).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},indent=2))
 print(result,flush=True)

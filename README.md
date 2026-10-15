@@ -8,6 +8,11 @@ Pocket2Droid is under development; compatibility and performance vary by Android
 
 Get the APK from the [Releases page](https://github.com/samsixx6/Pocket2Droid/releases).
 
+## Join the official Pocket2Droid Discord for news, updates and support.
+
+- [Discord](https://discord.gg/cVHYSwn9Bq)
+- [YouTube](https://www.youtube.com/@Pocket2Droid)
+
 ## Screenshots
 
 ### Windows Mobile
@@ -73,11 +78,6 @@ The shared folder is `Internal storage/pocket2droid`:
 | `storagecard` | Files available to the guest operating system |
 
 The guest operating system can modify files in its storagecard folder. Deleting a ROM from the library also deletes that ROM's internal storage, including installed applications, settings and saves; it leaves storagecard files intact.
-
-## Community and download links
-
-- [Discord](https://discord.com/invite/33DtX7HcxA)
-- [YouTube](https://www.youtube.com/@Pocket2Droid)
 
 ## Reporting problems
 

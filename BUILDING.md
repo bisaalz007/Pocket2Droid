@@ -1,6 +1,6 @@
 # Building Pocket2Droid
 
-The v1.0 APK was built with an Android Java frontend and an ARM64 QEMU engine compiled for Android's Bionic runtime. This snapshot contains the corresponding source, build recipes and recorded dependency identities.
+The v1.0.1 APK was built with an Android Java frontend and an ARM64 QEMU engine compiled for Android's Bionic runtime. This snapshot contains the corresponding source, build recipes and recorded dependency identities.
 
 The archived recipes currently depend on the maintainer's workspace and Linux caches. Building from a fresh checkout requires the portability changes listed below; the source snapshot alone does not yet provide a complete setup command.
 
@@ -20,7 +20,7 @@ The archived recipes currently depend on the maintainer's workspace and Linux ca
 
 `qemu-android-exact` already contains the Android adaptations. Applying those adaptations a second time is not part of reconstructing the recorded Android source.
 
-## Toolchain used for v1.0
+## Toolchain used for v1.0.1
 
 | Component | Configuration |
 | --- | --- |
@@ -48,7 +48,7 @@ The following scripts describe the existing working pipeline. Their current work
 4. `android/package_runtime.py` collects the native dependency closure, assigns private library names and checks ELF alignment.
 5. `android/build_storage.py` compiles the storage publication helper.
 6. `android/build.py` compiles the Java classes and DEX, links Android resources, packages the runtime, aligns the APK and signs it.
-7. `android/seal_samsixx_v1_0.py` verifies the renamed official candidate and archives its exact source and integrity records. This is a maintainer release tool, not a general contributor build entry point.
+7. `android/seal_v1_0_1.py` verifies the clock-fix release and archives its exact source and integrity records. This is a maintainer release tool, not a general contributor build entry point.
 
 `prepare_bionic.py` reads a live Termux package index. Its output should not be assumed to reconstruct the recorded v1.0 dependency versions; those versions and hashes are in `bionic-tools.json`.
 
@@ -87,15 +87,23 @@ These checks use temporary local files and the host version of the JNI publicati
 
 The v1.0 source passed 122 repository assertions and 71 settings/geometry assertions in each filesystem mode. These host checks do not establish Android gameplay speed or a fresh-checkout build.
 
+The native clock correction has two calendar/timing regressions and 17 existing device checks. With a host QEMU built from this source, the clock tests can be run with:
+
+```sh
+P2D_QEMU=/path/to/host/qemu-system-arm python3 tests/test_rtc_clock.py
+```
+
+Big Range Hunting 2 startup was also confirmed on Android using the 1.0.1-test build; the public build retains the same frontend and native runtime.
+
 ## Version and release identity
 
 - App name: `Pocket2Droid`
 - Application ID: `com.samsixx.pocket2droid`
-- Public version: `1.0`
-- Internal Android version code: `669`
+- Public version: `1.0.1`
+- Internal Android version code: `671`
 
-The internal version code continues from the development builds. This renamed package installs as a separate app from the earlier development package; app-private settings are not transferred automatically. Both packages use the same external `pocket2droid` folders, so exit the old app normally before starting the new one. Future updates to this package must keep its application ID/signing identity and increase that code.
+The internal version code continues from the development builds. Version 1.0.1 installs as an update to public 1.0 and 1.0.1-test, retaining the application ID, signing certificate and existing data. Exit the running ROM normally before updating. Future updates must keep the application ID/signing identity and increase the code.
 
-For this renamed maintainer release, `android/seal_samsixx_v1_0.py` validates the built candidate and produces a separate `apk/1.0-samsixx` folder. Earlier sealing recipes remain historical; they are not the current package-release workflow.
+For this maintainer release, `android/seal_v1_0_1.py` validates the built candidate and produces a separate `apk/1.0.1` folder. Public 1.0 and the test build are preserved. Earlier sealing recipes remain historical; they are not the current package-release workflow.
 
-The sealed v1.0 source archive contains its own `SOURCE_SHA256.json` inventory. The separate upload-review folder currently retains an older baseline inventory and a change ledger; those review files are not the v1.0 archive's inventory.
+The sealed v1.0.1 source archive contains its own `SOURCE_SHA256.json` inventory, including the unchanged dependency sources and notices retained from v1.0.

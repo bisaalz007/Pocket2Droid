@@ -15,6 +15,7 @@
 #include "qapi/error.h"
 #include "qapi/visitor.h"
 #include "qemu/timer.h"
+#include "system/rtc.h"
 #include "qemu/log.h"
 #include "qemu/bitops.h"
 #include "system/address-spaces.h"
@@ -380,8 +381,24 @@ static uint32_t reg_read(P2DSoc *s, uint32_t addr)
         return 0; /* No host service events; AC/full battery. */
     }
     if (addr >= 0x57000070 && addr <= 0x57000088) {
-        static const uint8_t bcd[] = { 0, 0, 0x12, 0x07, 0x04, 0x10, 0x26 };
-        return bcd[(addr - 0x57000070) / 4];
+        struct tm tm;
+
+        /* Calendar and OS tick clocks must both advance. SDL's WinCE timer
+         * corrects GetTickCount against GetSystemTime; a frozen RTC repeatedly
+         * resets elapsed time and can prevent a timed splash from finishing.
+         * Use QEMU's RTC source so -rtc base/clock and calendar carries agree.
+         */
+        qemu_get_timedate(&tm, 0);
+        switch (addr) {
+        case 0x57000070: value = tm.tm_sec; break;
+        case 0x57000074: value = tm.tm_min; break;
+        case 0x57000078: value = tm.tm_hour; break;
+        case 0x5700007c: value = tm.tm_mday; break;
+        case 0x57000080: value = tm.tm_wday + 1; break;
+        case 0x57000084: value = tm.tm_mon + 1; break;
+        default: value = (tm.tm_year + 1900) % 100; break;
+        }
+        return ((value / 10) << 4) | (value % 10);
     }
     if (addr >= 0x59000020 && addr <= 0x59000034) {
         unsigned index = (addr - 0x59000020) / 4;

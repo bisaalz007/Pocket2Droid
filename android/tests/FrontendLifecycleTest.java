@@ -9,12 +9,57 @@ import android.widget.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /** Real frontend windows on the owned PC emulator; no guest process or ROM data. */
 public final class FrontendLifecycleTest extends Instrumentation {
     private final List<String> failures=new ArrayList<>();
     private int checks;
     private boolean granted;
+    private static final class RestartProcess extends java.lang.Process {
+        boolean live=true;
+        public int exitValue(){if(live)throw new IllegalThreadStateException();return 0;}
+        public int waitFor(){live=false;return 0;}
+        public void destroy(){live=false;}
+        public InputStream getInputStream(){return null;}
+        public InputStream getErrorStream(){return null;}
+        public OutputStream getOutputStream(){return null;}
+    }
+    private void restartFlow(EmulatorActivity session)throws Exception{
+        try{EmulatorActivity.class.getDeclaredMethod("restart");}
+        catch(NoSuchMethodException missing){check(false,"Restart implements save-before-reopen lifecycle");return;}
+        Engine engine=(Engine)field(session,"engine");
+        List<String> observations=new CopyOnWriteArrayList<>();
+        File save=new File(session.getFilesDir(),"restart-owned-save.bin");
+        RandomAccessFile handle=new RandomAccessFile(save,"rw");handle.setLength(1);handle.write(73);
+        put(engine,"status",(Engine.Status)observations::add);put(engine,"storageHandle",handle);
+        for(int attempt=0;attempt<2;attempt++){
+            if(attempt==1)handle.setLength(StorageLayout.STORAGE_SIZE);
+            put(engine,"process",new RestartProcess());
+            main(()->{try{
+                session.onBackPressed();PopupMenu popup=(PopupMenu)field(session,"popup");
+                MenuItem restart=null;for(int i=0;i<popup.getMenu().size();i++)if(popup.getMenu().getItem(i).getTitle().equals("Restart"))restart=popup.getMenu().getItem(i);
+                check(restart!=null&&restart.isEnabled(),"Live guest can select Restart");
+                if(restart!=null)popup.getMenu().performIdentifierAction(restart.getItemId(),0);
+                popup.dismiss();
+            }catch(Exception e){throw new RuntimeException(e);}});
+            for(int i=0;i<150&&(Boolean)field(session,"closing");i++)Thread.sleep(20);
+            waitForIdleSync();check(!(Boolean)field(session,"closing"),"Restart completion restores menu availability");
+            if(attempt==0){
+                check(field(engine,"storageHandle")==handle,"Failed save keeps original storage handle");
+                check(observations.stream().noneMatch(s->s.startsWith("Wait for")),"Failed save never attempts a fresh Start");
+                check(!((RomBootState)field(session,"boot")).waiting(),"Failed save does not show a fresh boot");
+                shell("input keyevent 4");waitForIdleSync();
+            }else{
+                int stopped=-1,start=-1;for(int i=0;i<observations.size();i++){String s=observations.get(i);if(s.startsWith("Stopped;"))stopped=i;if(s.startsWith("Wait for"))start=i;}
+                // The test's SessionGuard owner intentionally blocks native Start.
+                check(stopped>=0&&start>stopped,"Restart attempts Start only after successful storage close");
+                check(field(session,"engine")==engine&&!session.isFinishing(),"Restart retains the same ROM screen and Engine");
+                check(((RomBootState)field(session,"boot")).waiting(),"Restart waits for a fresh boot image");
+            }
+        }
+        try(FileInputStream in=new FileInputStream(save)){check(in.read()==73,"Restart preserves owned save bytes");}
+    }
     private static Object field(Object object,String name)throws Exception {
         Class<?> type=object.getClass();
         while(type!=null){try{Field f=type.getDeclaredField(name);f.setAccessible(true);return f.get(object);}
@@ -174,6 +219,15 @@ public final class FrontendLifecycleTest extends Instrumentation {
                 final int opening=mode;
                 main(()->{try{
                     if(opening==0)((LinearLayout)field(session,"toolbar")).getChildAt(1).performClick();else session.onBackPressed();
+                    Menu sessionMenu=((PopupMenu)field(session,"popup")).getMenu();
+                    int restartAt=-1,exitAt=-1;
+                    for(int item=0;item<sessionMenu.size();item++){
+                        String title=sessionMenu.getItem(item).getTitle().toString();
+                        if(title.equals("Restart"))restartAt=item;
+                        if(title.equals("Exit"))exitAt=item;
+                    }
+                    check(restartAt>=0&&restartAt+1==exitAt,"Restart appears immediately above Exit: "+opening);
+                    if(restartAt>=0)check(!sessionMenu.getItem(restartAt).isEnabled(),"Restart is disabled without a live guest: "+opening);
                     check(!held(controls,ControlsLayout.Key.UP),"Opening menu releases held key: "+opening);
                     press(controls,ControlsLayout.Key.UP,MotionEvent.ACTION_DOWN);
                     check(!held(controls,ControlsLayout.Key.UP),"Menu blocks guest controls: "+opening);
@@ -209,7 +263,9 @@ public final class FrontendLifecycleTest extends Instrumentation {
                 press(controls,ControlsLayout.Key.SELECT,MotionEvent.ACTION_DOWN);
                 check(!held(controls,ControlsLayout.Key.SELECT),"Paused controls cannot accept keys");session.onResume();});
             main(()->{press(controls,ControlsLayout.Key.SELECT,MotionEvent.ACTION_DOWN);
-                check(held(controls,ControlsLayout.Key.SELECT),"Resume restores controls");controls.release();session.finish();});
+                check(held(controls,ControlsLayout.Key.SELECT),"Resume restores controls");controls.release();});
+            restartFlow(session);
+            main(session::finish);
             report.putString("stream",(failures.isEmpty()?"PASS ":"FAIL ")+checks+" real Android frontend lifecycle checks\n"+String.join("\n",failures)+"\n");
             report.putBoolean("passed",failures.isEmpty());
         }catch(Throwable failure){report.putString("stream","ERROR "+android.util.Log.getStackTraceString(failure));report.putBoolean("passed",false);}

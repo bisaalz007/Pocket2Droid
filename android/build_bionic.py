@@ -9,14 +9,16 @@ import subprocess
 
 HERE=Path(__file__).resolve().parent
 ROOT=Path('/opt/pocket2droid-android-tools/bionic')
-SOURCE=ROOT/'qemu-source'
-BUILD=ROOT/'qemu-build'
+SOURCE=Path('/opt/pocket2droid-network-integration/bionic-source')
+BUILD=Path('/opt/pocket2droid-network-integration/bionic-build')
 TOOLS=ROOT/'android-ndk-r30/toolchains/llvm/prebuilt/linux-x86_64/bin'
 PREFIX=ROOT/'sysroot/data/data/com.termux/files/usr'
 CC=TOOLS/'aarch64-linux-android24-clang'
 OUT=HERE/'build'
 
 def main():
+    slirp=OUT/'networking/android'
+    assert (slirp/'provenance.json').exists(), 'Run build_slirp.py --platform android first'
     if not (SOURCE/'.git').exists():
         subprocess.run(['git','clone','--local','--no-hardlinks','/opt/pocket2droid-tcg-build/source',str(SOURCE)],check=True)
     spec=importlib.util.spec_from_file_location('p2d_bionic_sync',HERE.parent/'sync_source.py')
@@ -69,19 +71,23 @@ static int shm_unlink(const char *name)
 '''
     posix.write_text(text.replace(marker,support_code+marker,1))
     # Bionic setjmp workaround shipped by the established Android QEMU port.
-    support=ROOT/'setjmp';support.mkdir(exist_ok=True);(support/'private').mkdir(exist_ok=True)
+    support=SOURCE.parent/'setjmp';support.mkdir(exist_ok=True);(support/'private').mkdir(exist_ok=True)
     for original in (OUT/'termux-reference/setjmp-aarch64').iterdir():
         name=original.name.replace('private-','private/')
         target=support/name;shutil.copyfile(original,target)
     subprocess.run([str(CC),'-I'+str(support),'-c',str(support/'setjmp.S'),'-o',str(support/'setjmp.o')],check=True)
     subprocess.run([str(TOOLS/'llvm-ar'),'rcs',str(support/'libandroid-setjmp.a'),str(support/'setjmp.o')],check=True)
     BUILD.mkdir(exist_ok=True)
+    pc=SOURCE.parent/'bionic-pkgconfig';pc.mkdir(exist_ok=True)
+    for entry in (PREFIX/'lib/pkgconfig').glob('*.pc'):
+        (pc/entry.name).write_text(entry.read_text().replace('prefix=/data/data/com.termux/files/usr','prefix='+str(PREFIX)))
+    shutil.copy2(slirp/'lib/pkgconfig/slirp.pc',pc/'slirp.pc')
     env=dict(os.environ,PATH=str(TOOLS)+':'+os.environ['PATH'],PKG_CONFIG='/usr/bin/pkg-config',
-             PKG_CONFIG_LIBDIR=str(PREFIX/'lib/pkgconfig'),PKG_CONFIG_SYSROOT_DIR=str(ROOT/'sysroot'))
+             PKG_CONFIG_LIBDIR=str(pc),PKG_CONFIG_SYSROOT_DIR='')
     config=[str(SOURCE/'configure'),'--target-list=arm-softmmu','--with-devices-arm=p2d',
             '--cc='+str(CC),'--cxx='+str(TOOLS/'aarch64-linux-android24-clang++'),
             '--host-cc=gcc','--cross-prefix='+str(TOOLS/'llvm-'),'--cpu=aarch64','--disable-werror',
-            '--without-default-features','--without-default-devices','--enable-tcg','--enable-pixman',
+            '--without-default-features','--without-default-devices','--enable-tcg','--enable-pixman','--enable-slirp',
             '--disable-tools','--disable-docs','--disable-user','--disable-plugins','--disable-modules',
             '--extra-cflags=-I'+str(PREFIX/'include'),
             '--extra-ldflags=-L'+str(PREFIX/'lib')+' -L'+str(support)+' -landroid-setjmp -landroid-shmem -llog -Wl,-z,max-page-size=16384 -Wl,-rpath,$ORIGIN']
@@ -95,6 +101,8 @@ static int shm_unlink(const char *name)
         subprocess.run(['ninja','-j12','qemu-system-arm'],cwd=BUILD,env=env,stdout=log,stderr=subprocess.STDOUT,check=True)
     target=OUT/'libp2dengine-bionic.so';shutil.copy2(BUILD/'qemu-system-arm',target)
     record={'binary_sha256':hashlib.sha256(target.read_bytes()).hexdigest(),
+            'slirp':json.loads((slirp/'provenance.json').read_text()),
+            'runtime_source_directory':str(SOURCE),
             'source':json.loads(SOURCE.with_name(SOURCE.name+'.sync.json').read_text()),
             'platform':'Android/Bionic API24 executable','termux_patch_sha256':hashlib.sha256(raw.encode()).hexdigest(),
             'builder_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),

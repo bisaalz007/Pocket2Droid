@@ -16,6 +16,8 @@ def needed(p):return re.findall(r'Shared library: \[([^]]+)\]',subprocess.check_
 def main():
     engine=OUT/'libp2dengine-bionic.so'
     native=json.loads((OUT/'bionic-engine.json').read_text())
+    slirp=OUT/'networking/android/provenance.json'
+    assert native.get('slirp')==json.loads(slirp.read_text()), 'Networking dependency provenance mismatch'
     assert sha(engine)==native['binary_sha256']
     todo=[engine];files={}
     while todo:
@@ -44,6 +46,7 @@ def main():
         assert set(needed(target)) <= SYSTEM | set(mapping.values()),'Runtime dependency closure broken'
         record[target.name]={'sha256':sha(target),'input_sha256':sha(source),'original_name':name,'symbols_sha256':sha(symbols)}
     report={'files':record,'native_engine_record_sha256':sha(OUT/'bionic-engine.json'),
+            'slirp_provenance_sha256':sha(slirp),
             'packager_sha256':sha(Path(__file__)),'tools_record_sha256':sha(OUT/'bionic-tools.json')}
     (OUT/'runtime.json').write_text(json.dumps(report,indent=2)+'\n')
     print('Sealed Android runtime:',', '.join(record),flush=True)

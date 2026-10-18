@@ -55,6 +55,7 @@ final class RomRepository {
         if(isManagedDefault(card)&&!card.exists())ProfileFiles.dir(card);
         card=validateCard(card);String last=lastIcon();List<String> choices=new ArrayList<>(Arrays.asList(ICONS));choices.remove(last);String icon=choices.get(random.nextInt(choices.size()));
         RomSettings settings=RomSettings.defaults(display,card);
+        if(state.equals("READY"))settings=settings.withNetworkSetupEligibility(false);
         settings=settings.withResolution(settings.startupResolution(name));
         try{JSONObject library=new JSONObject().put("schema",1).put("lastAssignedIconId",icon);
             ProfileFiles.commit(root,runtime,ProfileFiles.update("data/"+name+"/profile.json",record(settings,icon,state)),ProfileFiles.update("data/library.json",library));
@@ -149,13 +150,14 @@ final class RomRepository {
         boolean copying=p.saveState.equals("PREPARING_COPY")||(p.saveState.equals("NEW")&&choice==SaveChoice.USE_EXISTING_COPY);
         File old=copying?legacy():null;if(copying&&old==null)throw new IOException("No existing unassigned data to copy");
         String state=copying?"PREPARING_COPY":"PREPARING_NEW";
-        saveRecord(p,record(p.settings,p.iconId,state));
+        RomSettings preparedSettings=copying?p.settings.withNetworkSetupEligibility(false):p.settings;
+        saveRecord(p,record(preparedSettings,p.iconId,state));
         String expected=old==null?zeroDigest():StorageLayout.digest(old);
         if(p.storage.exists()){
             if(!p.storage.isFile()||p.storage.length()!=StorageLayout.STORAGE_SIZE||!StorageLayout.digest(p.storage).equals(expected))throw new IOException("Existing internal data differs from the pending preparation; both preserved");
         }else if(old!=null){try(InputStream in=new FileInputStream(old)){copy(in,p.storage,StorageLayout.STORAGE_SIZE,true,expected);}if(!StorageLayout.digest(old).equals(expected))throw new IOException("Original data changed during copy; both preserved");}
         else{InputStream zero=new InputStream(){long left=StorageLayout.STORAGE_SIZE;public int read(){if(left--<=0)return -1;return 0;}public int read(byte[] b,int off,int len){if(left==0)return -1;int n=(int)Math.min(left,len);Arrays.fill(b,off,off+n,(byte)0);left-=n;return n;}};copy(zero,p.storage,StorageLayout.STORAGE_SIZE,true,expected);}
-        saveRecord(p,record(p.settings,p.iconId,"READY"));return null;
+        saveRecord(p,record(preparedSettings,p.iconId,"READY"));return null;
     });}
     private static String zeroDigest()throws IOException{try{MessageDigest d=MessageDigest.getInstance("SHA-256");byte[] b=new byte[1024*1024];for(int i=0;i<32;i++)d.update(b);return hex(d.digest());}catch(NoSuchAlgorithmException e){throw new IOException(e);}}
     private void saveRecord(RomProfile p,JSONObject o)throws IOException{ProfileFiles.commit(root,runtime,ProfileFiles.update("data/"+p.filename+"/profile.json",o));}

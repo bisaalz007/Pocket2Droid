@@ -26,12 +26,12 @@ bool p2d_frame_open(P2DFrame *f, const char *path)
     struct stat st;
     int fd = open(path, O_RDWR | O_NOFOLLOW | O_CLOEXEC);
     if (fd < 0) { return false; }
-    if (fstat(fd, &st) || !S_ISREG(st.st_mode) || st.st_size != P2D_FRAME_SIZE) {
+    if (fstat(fd, &st) || !S_ISREG(st.st_mode) || st.st_size < 64 || (uintmax_t)st.st_size > SIZE_MAX) {
         close(fd); return false;
     }
-    uint8_t *map = mmap(NULL, P2D_FRAME_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    uint8_t *map = mmap(NULL, st.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (map == MAP_FAILED) { close(fd); return false; }
-    *f = (P2DFrame){ .fd = fd, .map = map };
+    *f = (P2DFrame){ .fd = fd, .map = map, .map_size = st.st_size };
     return true;
 }
 
@@ -39,14 +39,25 @@ bool p2d_frame_publish(P2DFrame *f, const uint32_t *pixels,
                        unsigned w, unsigned h, size_t stride)
 {
     struct flock lock = { .l_type = F_WRLCK, .l_whence = SEEK_SET };
-    if (!f->map || !w || !h || w > P2D_FRAME_WIDTH || h > P2D_FRAME_HEIGHT ||
-        stride < w * 4u || fcntl(f->fd, F_SETLK, &lock) < 0) { return false; }
+    if (!f->map || !pixels || !w || !h || (uint64_t)w * 4 > SIZE_MAX ||
+        h > (SIZE_MAX - 64) / ((size_t)w * 4) || stride < (size_t)w * 4 ||
+        (h > 1 && stride > (SIZE_MAX - (size_t)w * 4) / (h - 1)) ||
+        fcntl(f->fd, F_SETLK, &lock) < 0) { return false; }
+    size_t bytes = 64 + (size_t)w * h * 4;
+    if (bytes > f->map_size) {
+        if (bytes > INT64_MAX || ftruncate(f->fd, bytes) < 0) { goto unlock; }
+        uint8_t *map = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_SHARED, f->fd, 0);
+        if (map == MAP_FAILED) { goto unlock; }
+        munmap(f->map, f->map_size);
+        f->map = map;
+        f->map_size = bytes;
+    }
     bool changed = f->width != w || f->height != h;
     for (unsigned y = 0; !changed && y < h; ++y) {
         const uint32_t *src = (const uint32_t *)((const uint8_t *)pixels + y * stride);
         for (unsigned x = 0; x < w; ++x) {
             uint32_t pixel;
-            memcpy(&pixel, f->map + 64 + (y * w + x) * 4, 4);
+            memcpy(&pixel, f->map + 64 + ((size_t)y * w + x) * 4, 4);
             if (pixel != (src[x] | 0xff000000u)) { changed = true; break; }
         }
     }
@@ -54,7 +65,7 @@ bool p2d_frame_publish(P2DFrame *f, const uint32_t *pixels,
         for (unsigned y = 0; y < h; ++y) {
             const uint32_t *src = (const uint32_t *)((const uint8_t *)pixels + y * stride);
             for (unsigned x = 0; x < w; ++x) {
-                put32(f->map + 64 + (y * w + x) * 4, src[x] | 0xff000000u);
+                put32(f->map + 64 + ((size_t)y * w + x) * 4, src[x] | 0xff000000u);
             }
         }
         memcpy(f->map, "P2DF", 4);
@@ -68,11 +79,15 @@ bool p2d_frame_publish(P2DFrame *f, const uint32_t *pixels,
     lock.l_type = F_UNLCK;
     if (fcntl(f->fd, F_SETLK, &lock) < 0) { return false; }
     return changed;
+unlock:
+    lock.l_type = F_UNLCK;
+    fcntl(f->fd, F_SETLK, &lock);
+    return false;
 }
 
 void p2d_frame_close(P2DFrame *f)
 {
-    if (f->map) { munmap(f->map, P2D_FRAME_SIZE); }
+    if (f->map) { munmap(f->map, f->map_size); }
     if (f->fd >= 0) { close(f->fd); }
     *f = (P2DFrame){ .fd = -1 };
 }

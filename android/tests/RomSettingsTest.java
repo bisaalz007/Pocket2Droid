@@ -64,6 +64,26 @@ public final class RomSettingsTest {
             DisplayTransform landscape=DisplayTransform.create(640,240,320,240,RomSettings.ScaleMode.FITTED,positions[i],0,0);
             yes(landscape.top==0&&landscape.left==160&&landscape.touch(0,120)==null,"Full-height landscape images remain horizontally centered");
         }
+        // A custom size must survive persistence and unrelated settings edits.
+        RomSettings custom=RomSettings.parse(s.json().put("resolution","CUSTOM").put("customWidth",640).put("customHeight",360));
+        yes(custom.json().getInt("customWidth")==640&&custom.json().getInt("customHeight")==360,"Custom dimensions survive profile JSON roundtrip");
+        yes(custom.startupSize("PPC_USA_GSM_VGA_VR.BIN").width==640&&custom.startupSize("PPC_USA_GSM_VGA_VR.BIN").height==360,"Custom dimensions override filename-derived preset at launch");
+        yes(custom.withResolution(RomSettings.GuestResolution.VGA).startupSize("x.bin").width==480&&custom.withResolution(RomSettings.GuestResolution.VGA).startupSize("x.bin").height==640,"Selecting a preset stops using the remembered custom dimensions");
+        DisplayTransform customFit=DisplayTransform.create(400,400,640,360,RomSettings.ScaleMode.FITTED,0,0);
+        yes(customFit.top==87.5f&&customFit.touch(200,200)[0]==320&&customFit.touch(200,200)[1]==180&&customFit.touch(200,87)==null,"Custom aspect ratio keeps display scaling and guest touch coordinates aligned");
+        for(RomSettings edited:new RomSettings[]{custom.withDisplayName("Other"),custom.withScale(RomSettings.ScaleMode.PIXEL_PERFECT),custom.withOrientation(RomSettings.HostOrientation.LANDSCAPE),custom.withScreenPosition(RomSettings.ScreenPosition.BOTTOM),custom.withCard(new File("/tmp/new-card"))})
+            yes(edited.json().getString("resolution").equals("CUSTOM")&&edited.json().getInt("customWidth")==640&&edited.json().getInt("customHeight")==360,"Unrelated settings retain custom dimensions");
+        for(int[] size:new int[][]{{1,1},{1024,800},{641,479},{1280,960},{3840,2160},{Integer.MAX_VALUE,1}})
+            yes(RomSettings.parse(s.json().put("resolution","CUSTOM").put("customWidth",size[0]).put("customHeight",size[1])).json().getInt("customWidth")==size[0],"Engine-supported custom size persists without rounding");
+        for(Object[] size:new Object[][]{{0,320},{240,0},{-1,320},{2147483648L,320},{640.5,480},{"640",480},{JSONObject.NULL,480}}){
+            try{RomSettings.parse(s.json().put("resolution","CUSTOM").put("customWidth",size[0]).put("customHeight",size[1]));throw new AssertionError("Invalid custom size accepted");}catch(IOException expected){checks++;}
+        }
+        try{RomSettings.parse(s.json().put("resolution","CUSTOM"));throw new AssertionError("Custom profile without dimensions accepted");}catch(IOException expected){checks++;}
+        for(JSONObject partial:new JSONObject[]{s.json().put("customWidth",640),s.json().put("customHeight",480)}){
+            try{RomSettings.parse(partial);throw new AssertionError("Incomplete custom dimensions accepted");}catch(IOException expected){checks++;}
+        }
+        try{s.withCustomResolution(0,320);throw new AssertionError("Invalid custom editor size accepted");}catch(IOException expected){checks++;}
+        yes(RomSettings.parse(custom.withResolution(RomSettings.GuestResolution.VGA).json()).json().getInt("customWidth")==640,"Switching to a preset retains the last custom dimensions");
         System.out.println("PASS ROM settings/geometry "+checks+" assertions");
     }
 }

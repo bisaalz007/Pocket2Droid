@@ -1,0 +1,9 @@
+Pocket2Droid 1.0.2/code682 final release.
+Promotes signed1.0.2-test10 with version metadata changes only.
+Java behavior, native engines, guest helper, resources and storage formats
+are unchanged. Hidden2577, per-ROM StorageCard hint and red warning retained.
+Existing accepted tests are reused by exact source/payload identity; no
+new gameplay or phone browsing validation is claimed for this promotion.
+Original package/signer and16KiB APK/ELF alignment are verified.
+README unchanged; no ROM, save, private probe output or signing key bundled.
+Build recipes retain documented maintainer workspace/tool/signing assumptions.

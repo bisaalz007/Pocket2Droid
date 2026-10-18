@@ -18,7 +18,7 @@ public final class EngineKeyTest {
     static Object get(Object o, String n) throws Exception {
         Field f = Engine.class.getDeclaredField(n); f.setAccessible(true); return f.get(o);
     }
-    static final class FakeProcess extends Process {
+    static class FakeProcess extends Process {
         boolean live = true;
         public int exitValue() { if (live) throw new IllegalThreadStateException(); return 0; }
         public int waitFor() { live = false; return 0; }
@@ -82,7 +82,7 @@ public final class EngineKeyTest {
         factory.setAccessible(true);
         File selectedRoot=new File(base,"selected/pocket2droid"),runtime=new File(base,"selected/private"),card=new File(base,"card, with spaces");
         require(card.mkdirs(),"Disposable custom card");
-        RomSettings settings=RomSettings.defaults("OS B",card).withResolution(RomSettings.GuestResolution.SQUARE_VGA);
+        RomSettings settings=RomSettings.defaults("OS B",card).withInternetAccess(false).withResolution(RomSettings.GuestResolution.SQUARE_VGA);
         File rom=new File(selectedRoot,"Roms/OS B.BIN"),backing=new File(selectedRoot,"data/OS B.BIN/ram-fmd.bin");
         RomProfile selected=new RomProfile("OS B.BIN",RomRepository.ICONS[0],rom,backing,settings,"READY",null);
         Engine selection=new Engine(new ContextWrapper(null){public ApplicationInfo getApplicationInfo(){ApplicationInfo a=new ApplicationInfo();a.nativeLibraryDir=base.getPath();return a;}},s->{},new StorageLayout(selectedRoot,runtime,selected));
@@ -92,10 +92,24 @@ public final class EngineKeyTest {
         require(command.get(command.indexOf("-machine")+1).contains("shared-folder="+card.getPath().replace(",",",,")),"Commas in selected card options are escaped");
         require(command.get(command.indexOf("-machine")+1).contains(",screen-width=480,screen-height=480"),"Persisted resolution reaches actual engine launch arguments");
         require(selection.cab==null,"Selected ROM has no game-specific CAB dependency");
+        require(command.contains("-nic")&&command.get(command.indexOf("-nic")+1).equals("none")&&!command.contains("-netdev"),"Offline Engine has no backend");
+        put(selection,"networkSetupFile",new File(base,"unused-setup.exe"));require(!selection.processBuilder().command().toString().contains("network-setup="),"Offline Engine never exposes prepared helper");
+        RomProfile onlineProfile=new RomProfile(selected.filename,selected.iconId,rom,backing,settings.withInternetAccess(true),"READY",null);
+        Engine onlineEngine=new Engine(new ContextWrapper(null){public ApplicationInfo getApplicationInfo(){ApplicationInfo a=new ApplicationInfo();a.nativeLibraryDir=base.getPath();return a;}},s->{},new StorageLayout(selectedRoot,runtime,onlineProfile));
+        put(onlineEngine,"networkSetupFile",new File(base,"setup, private.exe"));
+        List<String> onlineCommand=onlineEngine.processBuilder().command();
+        require(onlineCommand.get(onlineCommand.indexOf("-machine")+1).contains(",network=on")&&onlineCommand.contains("user,id=p2dnet,ipv6=off")&&onlineCommand.toString().contains(onlineProfile.settings.networkMac),"Enabled Engine exposes optional card and user NAT with persisted MAC");require(onlineCommand.toString().contains("network-setup="+new File(base,"setup, private.exe").getPath().replace(",",",,")),"Eligible online profile passes exact escaped helper path");close(onlineEngine);
+        JSONObject oldSettings=onlineProfile.settings.json();oldSettings.remove("networkSetupEligible");RomProfile oldProfile=new RomProfile(selected.filename,selected.iconId,rom,backing,RomSettings.parse(oldSettings),"READY",null);
+        Engine oldEngine=new Engine(new ContextWrapper(null){public ApplicationInfo getApplicationInfo(){ApplicationInfo a=new ApplicationInfo();a.nativeLibraryDir=base.getPath();return a;}},s->{},new StorageLayout(selectedRoot,runtime,oldProfile));File legacyHelper=new File(base,"existing, profile.exe");put(oldEngine,"networkSetupFile",legacyHelper);require(oldEngine.processBuilder().command().toString().contains("network-setup="+legacyHelper.getPath().replace(",",",,")),"Existing Internet-On profile must deliver the guarded Work setup helper");close(oldEngine);
+        RomProfile customProfile=new RomProfile(selected.filename,selected.iconId,rom,backing,settings.withCustomResolution(640,360),"READY",null);
+        Engine customEngine=new Engine(new ContextWrapper(null){public ApplicationInfo getApplicationInfo(){ApplicationInfo a=new ApplicationInfo();a.nativeLibraryDir=base.getPath();return a;}},s->{},new StorageLayout(selectedRoot,runtime,customProfile));
+        List<String> customCommand=((ProcessBuilder)factory.invoke(customEngine)).command();
+        require(customCommand.get(customCommand.indexOf("-machine")+1).contains(",screen-width=640,screen-height=360"),"Custom width and height reach the actual native machine launch options");close(customEngine);
         require(selection.beginImport()&&Engine.activeProfileFilename().equals(selected.filename),"Guard retains selected filename");
         Engine challenger=inactive(new File(base,"challenger"));challenger.start();require(!challenger.starting,"Another ROM cannot steal a paused session");close(challenger);
         selection.endImport();CountDownLatch exited=new CountDownLatch(1);selection.close(ok->{require(ok&&!SessionGuard.busy(),"Exit callback follows ownership release");exited.countDown();});require(exited.await(2,TimeUnit.SECONDS),"Exit callback delivered");close(selection);
         List<String> arguments=((ProcessBuilder)factory.invoke(launch)).command();
+        require(!arguments.contains("-object"),"Raw WM6 launch preserves anonymous RAM");
         int machineIndex=arguments.indexOf("-machine");require(machineIndex>=0,"Engine passes native machine options");
         Map<String,String> options=new HashMap<>();
         for(String option:arguments.get(machineIndex+1).split(",")) {
@@ -114,6 +128,41 @@ public final class EngineKeyTest {
         close(launch);
         require(lock.isFile() && Os.stat(lock.getPath()).st_ino==inode,"Orderly cleanup retains the same lock inode");
         try(FileInputStream in=new FileInputStream(lock)) { require(in.read()==37,"Cleanup never truncates or replaces the stable private lock"); }
+        Engine retained=create(new File(base,"wm5-retained"),new Control());
+        File retainedFile=new File(retained.storage.getParentFile(),"wm5-sdram-fixture.bin");
+        RandomAccessFile ram=new RandomAccessFile(retainedFile,"rw");ram.setLength(GuestRam.SIZE);ram.write(81);
+        put(retained,"retainedRam",retainedFile);put(retained,"ramHandle",ram);
+        List<String> ramCommand=((ProcessBuilder)factory.invoke(retained)).command();
+        android.system.StructStat ramStat=Os.fstat(ram.getFD());
+        require(ramCommand.get(ramCommand.indexOf("-machine")+1).contains(",ram-path="+retainedFile.getPath()),"WM5 uses its retained main RAM file");
+        require(ramCommand.get(ramCommand.indexOf("-machine")+1).contains(",ram-identity="+Long.toHexString(ramStat.st_dev)+":"+Long.toHexString(ramStat.st_ino)),"Native RAM must match Android's actual open handle");
+        require(!ramCommand.contains("-object"),"RAM backend cannot independently create a missing save");
+        Method sync=Engine.class.getDeclaredMethod("syncStorage");sync.setAccessible(true);sync.invoke(retained);
+        ram.setLength(1);
+        try{sync.invoke(retained);throw new AssertionError("Invalid WM5 RAM must block successful save");}
+        catch(java.lang.reflect.InvocationTargetException expected){require(expected.getCause() instanceof IOException,"RAM error reported as storage failure");}
+        require(retained.busy(),"Failed RAM sync keeps ownership");
+        ram.setLength(GuestRam.SIZE);close(retained);
+        require(get(retained,"ramHandle")==null&&get(retained,"storageHandle")==null,"Normal close releases both synchronized storage handles");
+        try(FileInputStream in=new FileInputStream(retainedFile)){require(in.read()==81,"Close preserves WM5 RAM bytes");}
+        Engine retry=create(new File(base,"wm5-close-retry"),new Control());
+        RandomAccessFile retryRam=new RandomAccessFile(new File(retry.storage.getParentFile(),"retained.bin"),"rw"){
+            boolean fail=true;
+            @Override public void close()throws IOException{if(fail){fail=false;throw new IOException("owned close failure");}super.close();}
+        };
+        retryRam.setLength(GuestRam.SIZE);put(retry,"ramHandle",retryRam);
+        Method cleanup=Engine.class.getDeclaredMethod("cleanup");cleanup.setAccessible(true);
+        final int[] unregistered={0};NetworkSession network=new NetworkSession(new NetworkSession.Source(){public List<java.net.InetAddress> current(){return Collections.emptyList();}public void register(Runnable changed){}public void unregister(){unregistered[0]++;}},new File(base,"owned-network"),Runnable::run,text->{});network.start();put(retry,"networkSession",network);
+        require(!(Boolean)cleanup.invoke(retry)&&retry.busy(),"Partial close failure retains ownership and live handles");
+        require(unregistered[0]==1&&!network.resolverFile().exists(),"Actual backend death closes DNS observer even if retained-storage close fails");
+        require((Boolean)cleanup.invoke(retry)&&get(retry,"ramHandle")==null&&get(retry,"storageHandle")==null,"Retry closes both handles without reopening or resetting RAM");
+        close(retry);
+        Engine pending=create(new File(base,"network-pending"),new Control());
+        final boolean[] pendingLive={true};put(pending,"process",new FakeProcess(){public int exitValue(){if(pendingLive[0])throw new IllegalThreadStateException();return 0;}public void destroy(){}});
+        final int[] pendingClosed={0};NetworkSession pendingNetwork=new NetworkSession(new NetworkSession.Source(){public List<java.net.InetAddress> current(){return Collections.emptyList();}public void register(Runnable changed){}public void unregister(){pendingClosed[0]++;}},new File(base,"pending-dns"),Runnable::run,text->{});pendingNetwork.start();put(pending,"networkSession",pendingNetwork);
+        require(!(Boolean)cleanup.invoke(pending)&&pendingClosed[0]==0&&pendingNetwork.resolverFile().exists(),"Shutdown pending retains network observer until actual process death");
+        pendingLive[0]=false;require((Boolean)cleanup.invoke(pending)&&pendingClosed[0]==1,"Actual pending process death permits observer cleanup");close(pending);
+        System.out.println("PASS Engine WM5 RAM: backend arguments, pause sync rejection, ownership and normal close");
         Control slow = new Control(); slow.ackDelay = 150;
         Engine e = create(new File(base, "slow"), slow);
         e.key("tab", true); e.key("tab", false); waitBreak(slow);

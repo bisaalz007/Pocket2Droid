@@ -9,15 +9,21 @@ public final class FrontendTest {
         throw new AssertionError("Expected rejection");
     }
     public static void main(String[] args) throws Exception {
-        ByteBuffer b = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer b = ByteBuffer.allocate(FrameProtocol.SIZE).order(ByteOrder.LITTLE_ENDIAN);
         check(FrameProtocol.parse(b) == null);
         b.putInt(0, 0x46443250); b.putInt(4, 1); b.putInt(8, 240);
         b.putInt(12, 320); b.putInt(16, 1); b.putLong(24, 7);
         FrameProtocol.Header h = FrameProtocol.parse(b);
         check(h.width == 240 && h.height == 320 && h.sequence == 7);
-        b.putInt(8, 1025); rejects(() -> FrameProtocol.parse(b));
+        b.putInt(8, 0); rejects(() -> FrameProtocol.parse(b));
         b.putInt(8, 240); b.putInt(16, 2); rejects(() -> FrameProtocol.parse(b));
         b.putInt(16, 1); rejects(() -> FrameProtocol.parse(ByteBuffer.allocate(31)));
+        ByteBuffer large=ByteBuffer.allocate(FrameProtocol.frameBytes(1280,960)).order(ByteOrder.LITTLE_ENDIAN);
+        large.putInt(0,0x46443250);large.putInt(4,1);large.putInt(8,1280);large.putInt(12,960);large.putInt(16,1);large.putLong(24,8);
+        check(FrameProtocol.parse(large).width==1280&&FrameProtocol.parse(large).height==960);
+        ByteBuffer shortFrame=large.duplicate();shortFrame.limit(64);rejects(()->FrameProtocol.parse(shortFrame.slice()));
+        large.putInt(8,Integer.MAX_VALUE);rejects(()->FrameProtocol.parse(large));
+        rejects(()->FrameProtocol.frameBytes(Integer.MAX_VALUE,Integer.MAX_VALUE));
         int[] xy = FrameProtocol.touch(150, 200, 300, 600, 240, 320);
         check(xy[0] == 120 && xy[1] == 80);
         check(FrameProtocol.touch(150, 50, 300, 600, 240, 320) == null);

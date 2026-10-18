@@ -4,6 +4,10 @@ config DP8393X
 config NE2000_COMMON
     bool
 
+config P2D_NE2000
+    bool
+    select NE2000_COMMON
+
 config NE2000_PCI
     bool
     default y if PCI_DEVICES

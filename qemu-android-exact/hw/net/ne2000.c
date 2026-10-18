@@ -630,7 +630,7 @@ const VMStateDescription vmstate_ne2000 = {
     }
 };
 
-static uint64_t ne2000_read(void *opaque, hwaddr addr,
+uint64_t ne2000_pio_read(void *opaque, hwaddr addr,
                             unsigned size)
 {
     NE2000State *s = opaque;
@@ -654,7 +654,7 @@ static uint64_t ne2000_read(void *opaque, hwaddr addr,
     return val;
 }
 
-static void ne2000_write(void *opaque, hwaddr addr,
+void ne2000_pio_write(void *opaque, hwaddr addr,
                          uint64_t data, unsigned size)
 {
     NE2000State *s = opaque;
@@ -674,8 +674,8 @@ static void ne2000_write(void *opaque, hwaddr addr,
 }
 
 static const MemoryRegionOps ne2000_ops = {
-    .read = ne2000_read,
-    .write = ne2000_write,
+    .read = ne2000_pio_read,
+    .write = ne2000_pio_write,
     .endianness = DEVICE_LITTLE_ENDIAN,
 };
 

@@ -177,4 +177,4 @@ system_ss.add(when: 'CONFIG_SBSA_REF', if_true: files('sbsa_ec.c'))
 system_ss.add(when: 'CONFIG_LASI', if_true: files('lasi.c'))
 
 system_ss.add(when: 'CONFIG_AXIADO_CLK', if_true: files('axiado_clk.c'))
-specific_ss.add(when: 'CONFIG_P2D_DEVEMU', if_true: files('p2d-devemu-services.c', 'p2d-devemu-import.c'))
+specific_ss.add(when: 'CONFIG_P2D_DEVEMU', if_true: files('p2d-devemu-services.c', 'p2d-devemu-import.c', 'p2d-net-setup-files.c'))

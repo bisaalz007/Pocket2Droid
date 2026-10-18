@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PROJECT = ROOT.parents[1]
 BUILD = HERE / 'build'
-NATIVE = Path('/opt/pocket2droid-android-tools/bionic/qemu-source')
+NATIVE = Path('/opt/pocket2droid-network-integration/bionic-source')
 TOOLS = Path('/opt/pocket2droid-android-tools/bionic')
 SDK = Path('/opt/pocket2droid-android-tools/android-16')
 LEGACY_TOOLS = PROJECT / 'SOURCE/review-v640/Pocket2Droid-V6.40-Clean-Source'
@@ -200,6 +200,11 @@ def snapshot_sources(target, records):
         put(ROOT / 'run_probe.py', 'run_probe.py')
         for test in sorted(p for p in (ROOT / 'tests').rglob('*') if p.is_file() and p.suffix in ('.py', '.S', '.c', '.h')):
             put(test, 'tests/' + str(test.relative_to(ROOT / 'tests')))
+        for test in sorted((ROOT / 'tests/fixtures/network-setup').glob('*.xml')):
+            put(test, 'tests/fixtures/network-setup/' + test.name)
+        for source in sorted((ROOT / 'guest/network-setup').iterdir()):
+            if source.is_file() and source.suffix in ('.c','.h','.py'):
+                put(source,'guest/network-setup/' + source.name)
         selected = list(HERE.glob('*.py')) + [HERE / 'AndroidManifest.xml', HERE / 'PLAN.txt']
         selected += list((HERE / 'src').rglob('*.java'))
         selected += [p for p in (HERE / 'res').rglob('*') if p.is_file()]
@@ -209,6 +214,10 @@ def snapshot_sources(target, records):
         selected += [p for p in (HERE / 'native').rglob('*') if p.suffix in ('.c', '.h')]
         selected += list((BUILD / 'termux-reference').glob('*.patch')) + [BUILD / 'termux-reference/build.sh']
         selected += list((BUILD / 'termux-reference/setjmp-aarch64').iterdir())
+        selected += [p for p in (HERE / 'patches').rglob('*') if p.is_file()]
+        selected += [BUILD / 'networking/android/provenance.json']
+        selected += [BUILD / 'network-setup/production-helper' / name for name in ('autorun.exe','manifest.json')]
+        selected += [p for p in (BUILD / 'networking/android/source').rglob('*') if p.is_file()]
         selected += [BUILD / n for n in ('bionic-engine.json', 'runtime.json', 'bionic-tools.json', 'storage-runtime.json')]
         for p in sorted(selected):
             if p.is_file():

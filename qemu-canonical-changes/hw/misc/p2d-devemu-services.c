@@ -46,11 +46,13 @@ struct P2DSoc {
     bool down, touch_pending;
     uint32_t eintmask, eintpend;
     uint8_t pd_index, pd_regs[0x45], pd_chip;
+    bool pcmcia_level[2];
     uint32_t folder[4], emul_mask, emul_pending;
     ARMCPU *cpu;
     char *import_file;
     char *shared_folder;
     char *shared_move_state;
+    char *network_setup;
     P2DImport import;
     uint32_t spi1[6];
     uint8_t keys[32], key_head, key_count;
@@ -63,7 +65,10 @@ static void intc_update(P2DSoc *s)
 {
     uint32_t active;
     uint32_t subs = s->intc[6] & ~s->intc[7];
-    uint32_t ext = s->eintpend & ~s->eintmask;
+    uint32_t ext;
+    if (s->pcmcia_level[0]) { s->eintpend |= BIT(8); }
+    if (s->pcmcia_level[1]) { s->intc[0] |= BIT(3); }
+    ext = s->eintpend & ~s->eintmask;
 
     if (s->key_count) {
         s->intc[0] |= BIT(1); /* Keyboard queue drives EINT1 until drained. */
@@ -98,6 +103,13 @@ static void media_irq(void *opaque, int line, int level)
         s->intc[0] |= BIT(19);
         intc_update(s);
     }
+}
+
+static void pcmcia_irq(void *opaque, int line, int level)
+{
+    P2DSoc *s = opaque;
+    s->pcmcia_level[line] = level;
+    intc_update(s);
 }
 
 static uint64_t peripheral_frequency(P2DSoc *s)
@@ -683,13 +695,14 @@ static void soc_init(Object *obj)
     sysbus_init_irq(bus, &s->irq);
     sysbus_init_irq(bus, &s->fiq);
     qdev_init_gpio_in(DEVICE(obj), media_irq, 1);
+    qdev_init_gpio_in_named(DEVICE(obj), pcmcia_irq, "pcmcia", 2);
 }
 
 static void soc_realize(DeviceState *dev, Error **errp)
 {
     P2DSoc *s = P2D_SOC(dev);
     if (!p2d_import_load(&s->import, CPU(s->cpu), s->import_file,
-                         s->shared_folder, s->shared_move_state, errp)) {
+                         s->shared_folder, s->shared_move_state, s->network_setup, errp)) {
         return;
     }
     s->input = qemu_input_handler_register(dev, &touch_handler);
@@ -701,6 +714,7 @@ static const Property soc_properties[] = {
     DEFINE_PROP_STRING("import-file", P2DSoc, import_file),
     DEFINE_PROP_STRING("shared-folder", P2DSoc, shared_folder),
     DEFINE_PROP_STRING("shared-move-state", P2DSoc, shared_move_state),
+    DEFINE_PROP_STRING("network-setup", P2DSoc, network_setup),
 };
 
 static void soc_finalize(Object *obj)

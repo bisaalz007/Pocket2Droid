@@ -734,4 +734,5 @@ config AXIADO_EVK
 config P2D_DEVEMU
     bool
     depends on ARM && TCG
+    select P2D_NE2000
 

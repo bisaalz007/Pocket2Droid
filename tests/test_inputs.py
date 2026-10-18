@@ -29,7 +29,7 @@ class InputContractTests(unittest.TestCase):
         self.assertEqual(Path(data["run_root"]), self.runs.resolve())
 
     def test_same_named_v610_rom_is_rejected(self):
-        candidate = PROJECT / "PC windows mobile 6 Files/Roms and files/pocket pc/DeviceemulationV610/0409/PPC_USA.BIN"
+        candidate = PROJECT / "PC windows mobile 6 Files/Roms and files/pocket pc/DeviceemulationV610/0409/PPC_USA (240x320).BIN"
         with self.assertRaisesRegex(ValueError, "identity"):
             self.require_probe().validate_inputs(PROJECT, self.runs, rom_path=candidate)
 

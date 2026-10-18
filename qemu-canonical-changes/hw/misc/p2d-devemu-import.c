@@ -20,7 +20,8 @@ static bool folder_move_state_load(P2DImport *s, const char *state,
                                    const char *shared, Error **errp);
 
 bool p2d_import_load(P2DImport *s, CPUState *cpu, const char *path,
-                     const char *shared_folder, const char *move_state, Error **errp)
+                     const char *shared_folder, const char *move_state,
+                     const char *network_setup, Error **errp)
 {
     struct stat st;
     int fd;
@@ -43,6 +44,12 @@ bool p2d_import_load(P2DImport *s, CPUState *cpu, const char *path,
         if (s->root_fd < 0) {
             error_setg_errno(errp, errno, "Cannot open shared-folder directory");
             return false;
+        }
+        if (network_setup) {
+            Error *local = NULL;
+            if (!p2d_net_setup_files_load(&s->setup, network_setup, s->root_fd, &local)) {
+                warn_report_err(local);
+            }
         }
         return folder_move_state_load(s, move_state, shared_folder, errp);
     }
@@ -99,6 +106,7 @@ void p2d_import_reset(P2DImport *s)
                 closedir(s->find[i].directory);
             }
             s->find[i].directory = NULL;
+            s->find[i].setup_dir = s->find[i].setup_pending = s->find[i].setup_offered = false;
             g_clear_pointer(&s->find[i].pattern, g_free);
         }
     }
@@ -117,6 +125,7 @@ bool p2d_import_enabled(P2DImport *s)
 void p2d_import_cleanup(P2DImport *s)
 {
     p2d_import_reset(s);
+    p2d_net_setup_files_cleanup(&s->setup);
     if (s->initialized && s->root_fd >= 0) {
         close(s->root_fd);
     }
@@ -610,6 +619,18 @@ static bool folder_info(uint8_t *pb, const struct stat *st, const char *name,
     return !write_name || folder_write_name(pb, name);
 }
 
+static bool folder_setup_info(uint8_t *pb, const struct stat *st,
+                              const char *name, bool write_name)
+{
+    if (!folder_info(pb, st, name, write_name)) {
+        return false;
+    }
+    /* Hide only the synthetic helper. Autorun still opens its required path;
+     * real user entries retain the normal shared-folder metadata above. */
+    stw_le_p(pb + 28, lduw_le_p(pb + 28) | 2);
+    return true;
+}
+
 /* Iterative glob matching avoids recursive/exponential guest-supplied patterns.
  * Fold Unicode once; '?' consumes one Unicode code point. DOS '*.*' means '*'. */
 static bool folder_match(const char *pattern, const char *name)
@@ -646,18 +667,42 @@ static void folder_search_close(P2DFolderSearch *find)
         closedir(find->directory);
     }
     find->directory = NULL;
+    find->setup_dir = find->setup_pending = find->setup_offered = false;
     g_clear_pointer(&find->pattern, g_free);
 }
 
-static int folder_next(P2DFolderSearch *find, uint8_t *pb, bool write_name)
+static int folder_next(P2DImport *s, P2DFolderSearch *find, uint8_t *pb, bool write_name)
 {
     struct dirent *entry;
     struct stat st;
+    if (find->setup_dir) {
+        if (!find->setup_pending) {
+            return ENOENT;
+        }
+        find->setup_pending = false;
+        if (!folder_match(find->pattern, "autorun.exe") ||
+            !p2d_net_setup_files_stat(&s->setup, false, &st)) {
+            return ENOENT;
+        }
+        return folder_setup_info(pb, &st, "autorun.exe", write_name) ? 0 : EINVAL;
+    }
     while (true) {
         errno = 0;
         entry = readdir(find->directory);
         if (!entry) {
+            if (!errno && find->setup_pending) {
+                find->setup_pending = false;
+                if (p2d_net_setup_files_active(&s->setup) &&
+                    folder_match(find->pattern, "2577") &&
+                    p2d_net_setup_files_stat(&s->setup, true, &st)) {
+                    find->setup_offered = true;
+                    return folder_setup_info(pb, &st, "2577", write_name) ? 0 : EINVAL;
+                }
+            }
             return errno ? errno : ENOENT;
+        }
+        if (find->setup_offered && !strcmp(entry->d_name, "2577")) {
+            continue;
         }
         if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..") ||
             !g_utf8_validate(entry->d_name, -1, NULL) ||
@@ -690,16 +735,24 @@ static int folder_getinfo(P2DImport *s, uint8_t *pb, GPtrArray *parts)
 
     if (index > 0) {
         find = &s->find[txn]; /* Transaction validated by caller. */
-        if (!find->directory) {
+        if (!find->directory && !find->setup_dir) {
             return EIO;
         }
-        error = folder_next(find, pb, true);
+        error = folder_next(s, find, pb, true);
         if (error) {
             folder_search_close(find);
         }
         return error;
     }
     if (index == -1) {
+        if (parts->len && p2d_net_setup_files_handles(&s->setup, parts->pdata[0])) {
+            bool directory = parts->len == 1;
+            if (!directory && (parts->len != 2 || g_ascii_strcasecmp(parts->pdata[1], "autorun.exe"))) {
+                return ENOENT;
+            }
+            return p2d_net_setup_files_stat(&s->setup, directory, &st) &&
+                   folder_setup_info(pb, &st, directory ? "2577" : "autorun.exe", false) ? 0 : EIO;
+        }
         error = folder_parent(s, parts, parts->len, false, &dir, &leaf);
         if (error) {
             return error;
@@ -719,6 +772,20 @@ static int folder_getinfo(P2DImport *s, uint8_t *pb, GPtrArray *parts)
     }
     unsigned count = parts->len;
     const char *pattern = count ? parts->pdata[count - 1] : "*";
+    if (count > 1 && p2d_net_setup_files_handles(&s->setup, parts->pdata[0])) {
+        if (count != 2) {
+            return ENOTDIR;
+        }
+        find = txn == UINT32_MAX ? &temporary : &s->find[txn];
+        folder_search_close(find);
+        find->setup_dir = find->setup_pending = true;
+        find->pattern = g_strdup(pattern);
+        error = folder_next(s, find, pb, txn != UINT32_MAX);
+        if (error || txn == UINT32_MAX) {
+            folder_search_close(find);
+        }
+        return error;
+    }
     error = folder_parent(s, parts, count ? count - 1 : 0, false, &dir, &leaf);
     if (error) {
         return error == ENOENT ? ENOTDIR : error;
@@ -738,7 +805,8 @@ static int folder_getinfo(P2DImport *s, uint8_t *pb, GPtrArray *parts)
         return error;
     }
     find->pattern = g_strdup(pattern);
-    error = folder_next(find, pb, txn != UINT32_MAX);
+    find->setup_pending = count <= 1;
+    error = folder_next(s, find, pb, txn != UINT32_MAX);
     if (error || txn == UINT32_MAX) {
         folder_search_close(find);
     }
@@ -829,6 +897,33 @@ static uint32_t folder_execute(P2DImport *s, uint32_t address, uint32_t cmd)
     }
     if (cmd == 6 && (mode & 15) > 2) {
         return 123;
+    }
+    bool setup_path = parts && parts->len &&
+                      p2d_net_setup_files_handles(&s->setup, parts->pdata[0]);
+    bool setup_destination = parts2 && parts2->len &&
+                             p2d_net_setup_files_handles(&s->setup, parts2->pdata[0]);
+    if ((setup_path && (cmd == 5 || (cmd >= 0xc && cmd <= 0x10) ||
+                        (cmd == 6 && (mode & 15)))) || (cmd == 0xf && setup_destination)) {
+        return 5;
+    }
+    if (setup_path && cmd == 6) {
+        if (parts->len != 2 || g_ascii_strcasecmp(parts->pdata[1], "autorun.exe")) {
+            return 2;
+        }
+        for (h = 0; h < ARRAY_SIZE(s->files) && s->files[h].fd >= 0; h++) {}
+        if (h == ARRAY_SIZE(s->files)) {
+            return 4;
+        }
+        fd = fcntl(s->setup.fd, F_DUPFD_CLOEXEC, 0);
+        if (fd < 0) {
+            return 31;
+        }
+        s->files[h].fd = fd;
+        s->files[h].mode = 0;
+        s->files[h].position = 0;
+        s->files[h].name = g_strdup("autorun.exe");
+        stw_le_p(pb + 10, h);
+        return guest_copy(s, address, pb, sizeof(pb), true) ? 0 : 30;
     }
     if ((cmd >= 7 && cmd <= 0xa) || cmd == 0x13) {
         if (h >= ARRAY_SIZE(s->files) || s->files[h].fd < 0) {

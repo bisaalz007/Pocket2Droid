@@ -21,8 +21,8 @@ SDK = TOOLS / 'android-16'
 ANDROID = TOOLS / 'android-36/android.jar'
 BASELINE = PROJECT / 'apk/6.52/Pocket2Droid-V6.52-Persistent-JIT-DEV-SIGNED.apk'
 BASELINE_SHA = 'f491e563c1db6a62d3be8c952f56ee4556ff39e8138c9bc5b1c92de9de1fd058'
-VERSION = '1.0.1'
-VERSION_CODE = 671
+VERSION = '1.0.2'
+VERSION_CODE = 682
 
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def module(name, path):
@@ -48,6 +48,16 @@ def main():
     build = HERE / 'build'; build.mkdir(exist_ok=True)
     started = time.perf_counter()
     cache = module('p2d_build_cache', LEGACY / 'build_workflow.py').Cache(HERE)
+    setup_builder = module('p2d_guest_network_setup', HERE.parent / 'guest/network-setup/build.py')
+    setup_dir = build / 'network-setup/production-helper'
+    setup_record = setup_builder.build(setup_dir)
+    if setup_record['builder_sha256'] != sha(HERE.parent / 'guest/network-setup/build.py'):
+        raise ValueError('Guest network helper recipe is stale')
+    for path, expected in setup_record['sources'].items():
+        if sha(path) != expected: raise ValueError('Guest network helper source is stale: ' + path)
+    setup_assets = [setup_dir / name for name in ('autorun.exe', 'manifest.json')]
+    if sha(setup_assets[0]) != setup_record['executable_sha256']:
+        raise ValueError('Guest network helper executable differs from manifest')
     identity = json.dumps({'jdk': subprocess.check_output(['javac', '-version'], stderr=subprocess.STDOUT, text=True),
                            'javac': sha(Path(shutil.which('javac')).resolve()),
                            'android': sha(ANDROID), 'd8': sha(SDK / 'lib/d8.jar')}, sort_keys=True)
@@ -117,6 +127,11 @@ def main():
             raise ValueError('Stale storage helper source: ' + name)
     libraries.append(storage_library)
     engine = build / 'runtime/libp2dengine.so'
+    slirp_license=build/'networking/android/source/COPYRIGHT'
+    slirp_notice=HERE/'patches/LIBSLIRP-NOTICE.txt'
+    slirp_record=json.loads((build/'networking/android/provenance.json').read_text())
+    if native.get('slirp')!=slirp_record or sha(slirp_license)!=slirp_record['source_sha256']['COPYRIGHT']:
+        raise ValueError('Static libslirp provenance/notices differ from verified native build')
     sync = module('p2d_source_sync', HERE.parent / 'sync_source.py')
     if sync.git_names('diff', '--name-only', '-z', '--diff-filter=D', sync.BASE): raise ValueError('Native source deletion requires explicit rebuild handling')
     paths = set(sync.git_names('diff', '--name-only', '-z', '--diff-filter=ACMR', sync.BASE))
@@ -132,6 +147,9 @@ def main():
             entries.extend((name, z.read(name), 4) for name in z.namelist())
         entries += [('classes.dex', (dex / 'classes.dex').read_bytes(), 4),
                     ('assets/QEMU-COPYING.txt', (HERE.parent / 'qemu/COPYING').read_bytes(), 4)]
+        entries += [('assets/LIBSLIRP-COPYRIGHT.txt',slirp_license.read_bytes(),4),
+                    ('assets/LIBSLIRP-NOTICE.txt',slirp_notice.read_bytes(),4)]
+        entries += [('assets/network-setup/'+asset.name,asset.read_bytes(),4) for asset in setup_assets]
         entries.extend(('lib/arm64-v8a/' + library.name, library.read_bytes(), 16384) for library in libraries)
         with zipfile.ZipFile(unsigned, 'w', compression=zipfile.ZIP_STORED, allowZip64=False) as z:
             for name, content, align in entries:
@@ -141,7 +159,7 @@ def main():
                 # apksigner when it adds v1/v2/v3 signatures.
                 z.writestr(info, content)
     cache.run('package ' + variant, ['package', variant],
-              [linked, dex / 'classes.dex', *libraries, build / 'runtime.json', build / 'storage-runtime.json', HERE.parent / 'qemu/COPYING', Path(__file__)],
+              [linked, dex / 'classes.dex', *libraries, *setup_assets, build / 'runtime.json', build / 'storage-runtime.json', HERE.parent / 'qemu/COPYING',slirp_license,slirp_notice,Path(__file__)],
               [unsigned], identity, package_apk)
     aligned = unsigned.with_name(unsigned.stem + '-ALIGNED.apk')
     cache.run('align ' + variant, [str(SDK / 'zipalign'), '-f', '-P', '16', '4', str(unsigned), str(aligned)],

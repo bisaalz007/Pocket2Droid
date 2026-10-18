@@ -3,3 +3,4 @@
 # Supply their device-side symbols; no GICv5 device is instantiated by devemu.
 CONFIG_ARM_GICV5=y
 CONFIG_P2D_DEVEMU=y
+CONFIG_P2D_NE2000=y

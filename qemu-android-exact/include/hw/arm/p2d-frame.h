@@ -4,12 +4,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#define P2D_FRAME_WIDTH 1024u
-#define P2D_FRAME_HEIGHT 800u
-#define P2D_FRAME_SIZE (64u + P2D_FRAME_WIDTH * P2D_FRAME_HEIGHT * 4u)
+/* Initial allocation for existing clients, not a resolution limit. */
+#define P2D_FRAME_SIZE (64u + 1024u * 800u * 4u)
 typedef struct P2DFrame {
     int fd;
     uint8_t *map;
+    size_t map_size;
     uint32_t width, height;
     uint64_t sequence;
 } P2DFrame;

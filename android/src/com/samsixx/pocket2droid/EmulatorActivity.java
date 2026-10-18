@@ -73,8 +73,18 @@ public final class EmulatorActivity extends LibraryUi implements InputManager.In
         menu.add(0,1,0,"Sound").setCheckable(true).setChecked(prefs().getBoolean("sound_enabled",true));menu.add(0,2,1,"Display FPS counter").setCheckable(true).setChecked(prefs().getBoolean("fps_enabled",true));menu.add(0,3,2,"On-screen controls").setCheckable(true).setChecked(prefs().getBoolean("keys_enabled",true));menu.add(0,4,3,"Fullscreen").setCheckable(true).setChecked(fullscreen);
         if(profile.settings.scale==RomSettings.ScaleMode.PIXEL_PERFECT)menu.add(0,5,4,"Pan image").setCheckable(true).setChecked(panMode);
         menu.add(0,9,5,display.frameObserved?"Guest display: "+display.guestWidth+"×"+display.guestHeight:"Guest display: awaiting frame").setEnabled(false);
-        if(!engine.alive()&&!engine.starting)menu.add(0,7,6,"Start");menu.add(0,8,7,"Exit");
-        popup.setOnMenuItemClickListener(item->{int id=item.getItemId();String key=id==1?"sound_enabled":id==2?"fps_enabled":id==3?"keys_enabled":id==4?"fullscreen_enabled":null;if(key!=null){prefs().edit().putBoolean(key,!item.isChecked()).apply();applyPreferences();}else if(id==5){panMode=!panMode;message(panMode?"Pan image: drag to move; turn off to use guest touch":"Guest touch enabled");}else if(id==7){startEngine();}else if(id==8)exit();return true;});popup.setOnDismissListener(menuView->{popup=null;if(fullscreen)overflow.setVisibility(View.GONE);applyPreferences();});popup.show();
+        if(!engine.alive()&&!engine.starting)menu.add(0,7,6,"Start");
+        menu.add(0,10,7,"Restart").setEnabled(engine.alive()&&!engine.starting);menu.add(0,8,8,"Exit");
+        popup.setOnMenuItemClickListener(item->{int id=item.getItemId();String key=id==1?"sound_enabled":id==2?"fps_enabled":id==3?"keys_enabled":id==4?"fullscreen_enabled":null;if(key!=null){prefs().edit().putBoolean(key,!item.isChecked()).apply();applyPreferences();}else if(id==5){panMode=!panMode;message(panMode?"Pan image: drag to move; turn off to use guest touch":"Guest touch enabled");}else if(id==7){startEngine();}else if(id==10){restart();}else if(id==8)exit();return true;});popup.setOnDismissListener(menuView->{popup=null;if(fullscreen)overflow.setVisibility(View.GONE);applyPreferences();});popup.show();
+    }
+    private void restart(){
+        if(closing||engine==null||!engine.alive()||engine.starting)return;
+        closing=true;releaseInput();message("Saving and restarting…");
+        engine.close(success->post(()->{
+            closing=false;if(isFinishing()||isDestroyed())return;
+            if(success)startEngine();
+            else error("Save/restart did not complete. Existing data is preserved; retry after checking the error.");
+        }));
     }
     private void exit(){if(closing)return;closing=true;releaseInput();message("Saving and exiting…");engine.close(success->post(()->{closing=false;if(success){startActivity(new Intent(this,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));finish();}else error("Save/exit did not complete. Existing data is preserved; retry Exit after checking the error.");}));}
     @Override public void onBackPressed(){if(display==null){finish();return;}showMenu();}

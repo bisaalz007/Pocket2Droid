@@ -66,8 +66,22 @@ int main(void)
     assert(p2d_frame_publish(&frame, wvga, 480, 800, 480 * 4));
     assert(*(uint32_t *)(map + 12) == 800);
     assert(*(uint32_t *)(map + 64 + (480 * 800 - 1) * 4) == 0xff123456);
-    assert(!p2d_frame_publish(&frame, wvga, 480, 801, 480 * 4));
+    assert(!p2d_frame_publish(&frame, wvga, 480, 800, 479 * 4));
     free(wvga);
+    /* A real large frame grows transport storage without an artificial size cap. */
+    uint32_t *large = calloc(1280 * 960, sizeof(uint32_t));
+    assert(large);
+    large[1280 * 960 - 1] = 0x00654321;
+    assert(p2d_frame_publish(&frame, large, 1280, 960, 1280 * 4));
+    size_t bytes = 64 + 1280 * 960 * 4;
+    uint8_t *grown = mmap(NULL, bytes, PROT_READ, MAP_SHARED, fd, 0);
+    assert(grown != MAP_FAILED);
+    assert(*(uint32_t *)(grown + 8) == 1280 && *(uint32_t *)(grown + 12) == 960);
+    assert(*(uint32_t *)(grown + bytes - 4) == 0xff654321);
+    assert(!p2d_frame_publish(&frame, large, 1280, 960, 1280 * 4));
+    assert(!p2d_frame_publish(&frame, large, UINT32_MAX, UINT32_MAX, SIZE_MAX));
+    munmap(grown, bytes);
+    free(large);
     p2d_frame_close(&frame);
     munmap(map, P2D_FRAME_SIZE);
     close(fd);

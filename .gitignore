@@ -19,7 +19,22 @@ local.properties
 !/android/build/storage-runtime.json
 !/android/build/termux-reference/
 
+# Required recorded networking source and the exact guest helper asset
+!/android/build/networking/
+/android/build/networking/*
+!/android/build/networking/android/
+/android/build/networking/android/*
+!/android/build/networking/android/provenance.json
+!/android/build/networking/android/source/
+!/android/build/network-setup/
+/android/build/network-setup/*
+!/android/build/network-setup/production-helper/
+/android/build/network-setup/production-helper/*
+!/android/build/network-setup/production-helper/autorun.exe
+!/android/build/network-setup/production-helper/manifest.json
+
 # Other build outputs and caches
+/results/
 /build/
 /dist/
 /apk/

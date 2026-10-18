@@ -31,11 +31,11 @@ static bool lcd_update(void *opaque)
     unsigned height = ((s->regs[1] >> 14) & 0x3ff) + 1;
     unsigned stride = (s->regs[7] & 0x7ff) + ((s->regs[7] >> 11) & 0x7ff);
     hwaddr base = (hwaddr)(s->regs[5] & 0x3fffffff) << 1;
-    uint8_t row[2048];
+    uint8_t row[4096]; /* All pixels addressable by the LCD's 11-bit width field. */
     unsigned x, y;
 
     if (!(s->regs[0] & 1) || ((s->regs[0] >> 1) & 15) != 12 ||
-        width > P2D_FRAME_WIDTH || height > P2D_FRAME_HEIGHT || !stride || stride < width ||
+        !stride || stride < width ||
         base < 0x30000000 || base + (hwaddr)stride * height * 2 > 0x38000000) {
         return true;
     }
@@ -121,7 +121,7 @@ static void lcd_realize(DeviceState *dev, Error **errp)
     s->frame.fd = -1;
     if (s->frame_path) {
         if (!p2d_frame_open(&s->frame, s->frame_path)) {
-            error_setg(errp, "p2d frame-file must be an existing regular file of exactly %u bytes", P2D_FRAME_SIZE);
+            error_setg(errp, "p2d frame-file must be an existing regular buffer of at least 64 bytes");
             return;
         }
         s->frame_timer = timer_new_ms(QEMU_CLOCK_REALTIME, lcd_frontend_refresh, s);

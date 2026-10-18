@@ -16,7 +16,7 @@ import uuid
 
 EXPERIMENT = Path(__file__).resolve().parent
 PROJECT = EXPERIMENT.parents[1]
-ROM_RELATIVE = Path("PC windows mobile 6 Files/Roms and files/pocket pc/Deviceemulation/0409/PPC_USA.BIN")
+ROM_RELATIVE = Path("PC windows mobile 6 Files/Roms and files/pocket pc/Deviceemulation/0409/PPC_USA (240x320).BIN")
 ROM_BYTES = 100663296
 ROM_SHA256 = "b6ca519070e84da0bf6886fb3bde606ce098a0cfaffff436b8faf46a9a580bf7"
 

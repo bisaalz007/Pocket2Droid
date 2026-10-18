@@ -22,6 +22,25 @@ Dependency versions and hashes are recorded in
 `android/build/bionic-tools.json` and `android/build/runtime.json`.
 These components retain their respective licenses.
 
+## libslirp
+
+The network-enabled native engine statically links libslirp 4.9.5.
+Upstream: https://gitlab.freedesktop.org/slirp/libslirp/-/tree/v4.9.5
+
+The pinned source archive, complete upstream `COPYRIGHT`, changed `slirp.c`
+and resolver patch are retained in `android/build/networking/android/source/`.
+The provenance record in its parent directory records the archive, patch and
+source hashes. `android/patches/LIBSLIRP-NOTICE.txt` describes the local change.
+Upstream BSD-3-Clause and MIT notices remain intact.
+
+## Guest network setup helper
+
+`guest/network-setup/` contains Pocket2Droid's ARMv4 Windows CE helper and its
+bounded PE builder. The exact packaged `autorun.exe` and hash manifest are in
+`android/build/network-setup/production-helper/`. This executable is built from
+the supplied source; it is not a Microsoft OS or SDK executable. No Windows
+Mobile ROM, CE SDK or game is included.
+
 ## Microsoft Device Emulator references
 
 Microsoft Device Emulator source was consulted for keyboard

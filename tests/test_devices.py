@@ -136,6 +136,24 @@ class DeviceTests(unittest.TestCase):
         self.assertEqual(len(data), len(b'P6\n480 800\n255\n') + 480 * 800 * 3)
         self.assertEqual(data[-3:], b'\x00\x00\xff')
 
+    def test_lcd_large_frame_exceeds_old_transport_dimensions(self):
+        self.request('writew 0x33000000 0xf800')
+        last=0x33000000+(1280*960-1)*2
+        self.request(f'writew 0x{last:x} 0x001f')
+        self.write(0x4d000004,959<<14)
+        self.write(0x4d000008,1279<<8)
+        self.write(0x4d000010,1<<11)
+        self.write(0x4d000014,0x33000000>>1)
+        self.write(0x4d00001c,1280)
+        self.write(0x4d000000,0x79)
+        path=ROOT/'results/test-inputs/lcd-large.ppm'
+        self.qmp.request('screendump',{'filename':str(path),'format':'ppm'})
+        data=path.read_bytes();header=b'P6\n1280 960\n255\n'
+        self.assertEqual(len(data),len(header)+1280*960*3)
+        self.assertTrue(data.startswith(header))
+        self.assertEqual(data[len(header):len(header)+3],b'\xff\x00\x00')
+        self.assertEqual(data[-3:],b'\x00\x00\xff')
+
     def test_timer_fiq_route_mask_and_ack(self):
         self.request('irq_intercept_out /machine/p2d-soc sysbus-irq')
         self.write(0x4a000004, 1 << 14)

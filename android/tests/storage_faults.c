@@ -66,3 +66,10 @@ ssize_t p2d_test_write(int fd, const void *bytes, size_t count)
 JNIEXPORT void JNICALL Java_com_samsixx_pocket2droid_StorageFallbackTest_failAfter
     (JNIEnv *env,jclass type,jlong bytes)
 { (void)env; (void)type; fail_after=bytes; }
+
+JNIEXPORT void JNICALL Java_com_samsixx_pocket2droid_GuestRamTest_directoryFault
+    (JNIEnv *env,jclass type,jstring path,jint fault,jint nth)
+{ Java_com_samsixx_pocket2droid_StorageFallbackTest_directoryFault(env,type,path,fault,nth); }
+JNIEXPORT void JNICALL Java_com_samsixx_pocket2droid_GuestRamTest_failAfter
+    (JNIEnv *env,jclass type,jlong bytes)
+{ Java_com_samsixx_pocket2droid_StorageFallbackTest_failAfter(env,type,bytes); }

@@ -1,6 +1,6 @@
 # Building Pocket2Droid
 
-The v1.0.1 APK was built with an Android Java frontend and an ARM64 QEMU engine compiled for Android's Bionic runtime. This snapshot contains the corresponding source, build recipes and recorded dependency identities.
+The v1.0.2 APK was built with an Android Java frontend and an ARM64 QEMU engine compiled for Android's Bionic runtime. This snapshot contains the corresponding source, build recipes and recorded dependency identities.
 
 The archived recipes currently depend on the maintainer's workspace and Linux caches. Building from a fresh checkout requires the portability changes listed below; the source snapshot alone does not yet provide a complete setup command.
 
@@ -15,12 +15,17 @@ The archived recipes currently depend on the maintainer's workspace and Linux ca
 | `android/build-tooling/` | Shared build-cache and APK-manifest verification helpers |
 | `qemu-android-exact/` | QEMU source used by the Android native build, including the Android adaptations |
 | `qemu-canonical-changes/` | Pocket2Droid's canonical QEMU changes |
-| `tests/` | Native emulation and device correctness checks |
+| `tests/` | Native emulation, network, loader and device correctness checks |
+| `guest/network-setup/` | ARMv4 Windows CE one-shot network helper source and PE builder |
+| `android/build_slirp.py` | Pinned static libslirp host/Android build recipe |
+| `android/patches/` | libslirp resolver patch and notices |
+| `android/build/networking/android/` | Exact libslirp provenance, source archive, changed source and notices |
+| `android/build/network-setup/production-helper/` | Exact guest helper asset and source/tool hash manifest |
 | `sources.lock.json` | Upstream revisions and development provenance |
 
 `qemu-android-exact` already contains the Android adaptations. Applying those adaptations a second time is not part of reconstructing the recorded Android source.
 
-## Toolchain used for v1.0.1
+## Toolchain used for v1.0.2
 
 | Component | Configuration |
 | --- | --- |
@@ -43,12 +48,13 @@ The recorded Android dependency identities are in `android/build/bionic-tools.js
 The following scripts describe the existing working pipeline. Their current workspace assumptions must be resolved before using the same pipeline in a fresh checkout.
 
 1. `android/prepare_tools.py` prepares the Android SDK platform/build tools and Java compiler environment.
-2. `android/prepare_bionic.py` prepares the NDK and Android library sysroot.
-3. `android/build_bionic.py` compiles the Android QEMU engine from the canonical development checkout and applies the Android adaptations.
-4. `android/package_runtime.py` collects the native dependency closure, assigns private library names and checks ELF alignment.
-5. `android/build_storage.py` compiles the storage publication helper.
-6. `android/build.py` compiles the Java classes and DEX, links Android resources, packages the runtime, aligns the APK and signs it.
-7. `android/seal_v1_0_1.py` verifies the clock-fix release and archives its exact source and integrity records. This is a maintainer release tool, not a general contributor build entry point.
+2. `android/prepare_bionic.py` prepares the NDK and Android library sysroot. The network helper also requires host LLVM 17 tools (`clang-17`, `ld.lld-17` and `lld-link-17`).
+3. `python3 android/build_slirp.py --platform android` builds the pinned libslirp dependency before the native engine. Its Android resolver patch and source archive are included.
+4. `android/build_bionic.py` compiles the Android QEMU engine from the canonical development checkout and applies the Android adaptations.
+5. `android/package_runtime.py` collects the native dependency closure, assigns private library names and checks ELF alignment.
+6. `android/build_storage.py` compiles the storage publication helper.
+7. `android/build.py` compiles the Java classes and DEX, links Android resources, packages the runtime, aligns the APK and signs it.
+8. `android/seal_v1_0_2.py` verifies 1.0.2 and archives its exact source and integrity records. This is a maintainer release tool, not a general contributor build entry point.
 
 `prepare_bionic.py` reads a live Termux package index. Its output should not be assumed to reconstruct the recorded v1.0 dependency versions; those versions and hashes are in `bionic-tools.json`.
 
@@ -56,7 +62,7 @@ The following scripts describe the existing working pipeline. Their current work
 
 ### Workspace paths and source synchronization
 
-`sync_source.py` expects a `qemu` Git checkout and a specific upstream revision. `build_bionic.py` also expects Linux caches under `/opt/pocket2droid-tcg-build` and `/opt/pocket2droid-android-tools`. This snapshot provides the exact Android source tree and canonical changes, but no development `.git` history or ready-made `qemu` checkout.
+`sync_source.py` expects a `qemu` Git checkout and a specific upstream revision. `build_bionic.py` expects native source/build caches under `/opt/pocket2droid-network-integration`, a canonical cache under `/opt/pocket2droid-tcg-build`, and the toolchain under `/opt/pocket2droid-android-tools`. `build_slirp.py` has similar cache/toolchain assumptions. This snapshot provides the exact Android source tree and canonical changes, but no development `.git` history or ready-made `qemu` checkout.
 
 A public build needs an explicit way to select the supplied Android tree or reconstruct the pinned canonical checkout, with configurable toolchain/cache locations.
 
@@ -85,7 +91,9 @@ python3 android/tests/run_library_tests.py --settings --fallback
 
 These checks use temporary local files and the host version of the JNI publication helper. They do not install an APK or operate on phone ROMs and saves. The runner currently expects `android.jar` at `/opt/pocket2droid-android-tools/android-36/android.jar`.
 
-The v1.0 source passed 122 repository assertions and 71 settings/geometry assertions in each filesystem mode. These host checks do not establish Android gameplay speed or a fresh-checkout build.
+Recorded checks include 133 repository assertions, 98 settings/geometry assertions, 127 network configuration checks, 19 helper publication/profile checks, 13 session checks, seven guest-helper checks and 24 Android network UI/observer/socket checks with Engine ART lifecycle validation. Test10 also records 11 virtual-helper checks, 182 native tests and a disposable Windows Mobile autorun probe; the 36 Android StorageCard checks precede the cosmetic hint/icon changes. The hint and red vector were compiled and checked in the sealed APK. Final 1.0.2 retains the same behavioral payload as test10; these accepted checks are reused by exact source/payload identity. These are recorded release results, not a new run from this public checkout. They do not establish gameplay speed, full phone browsing or a fresh-checkout build.
+
+The host network logic runner is `python3 android/tests/run_network_tests.py` with the same configured SDK and Java environment. Guest-helper checks are in `tests/test_net_setup.py`; native tests need a matching host engine and their documented fixtures. Do not run phone/probe scripts against personal ROMs or saves without reviewing their inputs.
 
 The native clock correction has two calendar/timing regressions and 17 existing device checks. With a host QEMU built from this source, the clock tests can be run with:
 
@@ -93,17 +101,19 @@ The native clock correction has two calendar/timing regressions and 17 existing 
 P2D_QEMU=/path/to/host/qemu-system-arm python3 tests/test_rtc_clock.py
 ```
 
-Big Range Hunting 2 startup was also confirmed on Android using the 1.0.1-test build; the public build retains the same frontend and native runtime.
+Historical validation: Big Range Hunting 2 startup was confirmed on Android using 1.0.1-test, whose runtime was retained in public v1.0.1. That result is not a new gameplay test of the test10 source.
 
 ## Version and release identity
 
 - App name: `Pocket2Droid`
 - Application ID: `com.samsixx.pocket2droid`
-- Public version: `1.0.1`
-- Internal Android version code: `671`
+- Source/release version: `1.0.2`
+- Internal Android version code: `682`
 
-The internal version code continues from the development builds. Version 1.0.1 installs as an update to public 1.0 and 1.0.1-test, retaining the application ID, signing certificate and existing data. Exit the running ROM normally before updating. Future updates must keep the application ID/signing identity and increase the code.
+This is the source corresponding to the final signed 1.0.2 APK. It promotes test10 with version metadata changes only. The source update includes Windows Mobile 5, Restart, custom resolutions, networking, per-ROM StorageCard selection and a hidden virtual Internet setup helper. The exact Android native source, canonical changes, guest helper and dependency inputs are retained; only public documentation and Git ignore rules were refreshed for this GitHub preparation.
 
-For this maintainer release, `android/seal_v1_0_1.py` validates the built candidate and produces a separate `apk/1.0.1` folder. Public 1.0 and the test build are preserved. Earlier sealing recipes remain historical; they are not the current package-release workflow.
+The internal version code continues from earlier development builds. Official updates retain the application ID and signing certificate and increase the code. Exit the running ROM normally before updating. A contributor key cannot replace the official app as an ordinary update; use the disposable test application ID for contributor testing.
 
-The sealed v1.0.1 source archive contains its own `SOURCE_SHA256.json` inventory, including the unchanged dependency sources and notices retained from v1.0.
+`android/seal_v1_0_2.py` is the current archived maintainer release recipe. Earlier sealing scripts are historical. They require private workspace inputs and previous protected releases, which are intentionally not distributed here. They are not contributor build entry points.
+
+The source ZIP contains a fresh `SOURCE_SHA256.json` inventory. Git tracks the source, notices and required recorded inputs, while excluding generated builds, private signing material and user data. Full phone browsing confirmation for the test10 existing-profile correction remains pending; no clean-machine build is claimed.

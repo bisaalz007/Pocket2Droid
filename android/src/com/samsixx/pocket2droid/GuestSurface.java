@@ -54,14 +54,16 @@ final class GuestSurface extends SurfaceView {
                     if (generation != engine.generation) {
                         if (file != null) file.close();
                         file = new RandomAccessFile(engine.frames, "r");
-                        if (file.length() != FrameProtocol.SIZE) throw new IllegalStateException("Frame size mismatch");
-                        mapped = file.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, FrameProtocol.SIZE);
+                        mapped = null;
                         generation = engine.generation; last = 0;frameObserved=false;pictureObserved=false;
                     }
                     FrameProtocol.Header header = null;
                     long targetSurface = surfaceGeneration;
-                    try (FileLock lock = file.getChannel().tryLock(0, FrameProtocol.SIZE, true)) {
+                    synchronized(Engine.frameAccess){try (FileLock lock = file.getChannel().tryLock(0, Long.MAX_VALUE, true)) {
                         if (lock != null) {
+                            long length=file.length();
+                            if(length<64||length>Integer.MAX_VALUE)throw new IllegalStateException("Frame buffer exceeds this platform's addressable memory");
+                            if(mapped==null||mapped.capacity()!=length)mapped=file.getChannel().map(FileChannel.MapMode.READ_ONLY,0,length);
                             FrameProtocol.Header h = FrameProtocol.parse(mapped);
                             if (h != null && (h.sequence != last || targetSurface != paintedSurface)) {
                                 if (bitmap == null || bitmap.getWidth() != h.width || bitmap.getHeight() != h.height) {
@@ -74,7 +76,7 @@ final class GuestSurface extends SurfaceView {
                                 header = h;
                             }
                         }
-                    } // Shared file lock ends before bitmap conversion or Android drawing.
+                    }} // Shared locks end before bitmap conversion or Android drawing.
                     if (header != null && resumed) {
                         bitmap.setPixels(pixels, 0, header.width, 0, 0, header.width, header.height);
                         Canvas canvas = null;
@@ -103,6 +105,8 @@ final class GuestSurface extends SurfaceView {
                 long sleep = 16_000_000L - (System.nanoTime() - began);
                 if (sleep > 0) Thread.sleep(sleep / 1_000_000, (int)(sleep % 1_000_000));
             }
+        } catch (OutOfMemoryError error) {
+            if (!destroyed) status.changed("Display error: not enough memory for this resolution");
         } catch (Exception error) {
             if (!destroyed) status.changed("Display error: " + error.getMessage());
         } finally {

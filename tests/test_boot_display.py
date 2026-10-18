@@ -40,11 +40,16 @@ class BootDisplayTests(unittest.TestCase):
             with self.subTest(width=width,height=height):
                 self.check_size(f',screen-width={width},screen-height={height}',width,height)
     def test_invalid_dimensions_fail_closed(self):
-        for option in ['screen-width=0','screen-width=-1','screen-width=1025',
-                       'screen-height=801','screen-height=not-a-number','screen-width=65536']:
+        for option in ['screen-width=0','screen-width=-1',
+                       'screen-height=0','screen-height=not-a-number','screen-width=65536']:
             result=subprocess.run([BINARY,'-M','p2d-devemu,'+option,'-display','none'],
                                   capture_output=True,timeout=5)
             self.assertNotEqual(result.returncode,0)
             self.assertIn('Invalid screen-',result.stderr.decode())
+
+    def test_custom_sizes_are_not_capped_by_the_old_transport(self):
+        for width,height in [(1280,960),(3840,2160),(65535,65535)]:
+            with self.subTest(width=width,height=height):
+                self.check_size(f',screen-width={width},screen-height={height}',width,height)
 
 if __name__=='__main__': unittest.main()

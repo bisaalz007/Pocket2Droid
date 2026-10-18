@@ -37,6 +37,8 @@ typedef struct NE2000State {
 void ne2000_setup_io(NE2000State *s, DeviceState *dev, unsigned size);
 extern const VMStateDescription vmstate_ne2000;
 void ne2000_reset(NE2000State *s);
+uint64_t ne2000_pio_read(void *opaque, hwaddr addr, unsigned size);
+void ne2000_pio_write(void *opaque, hwaddr addr, uint64_t data, unsigned size);
 ssize_t ne2000_receive(NetClientState *nc, const uint8_t *buf, size_t size_);
 
 #endif

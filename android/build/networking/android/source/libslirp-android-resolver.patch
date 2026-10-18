@@ -1,0 +1,82 @@
+--- a/src/slirp.c
++++ b/src/slirp.c
+@@ -391,6 +391,61 @@
+ #define RESOLV_CONF_PATH "/etc/resolv.conf"
+ #endif
+ 
++
++#include <fcntl.h>
++/* Pocket2Droid: each engine owns a bounded, atomically replaced private file.
++ * DNS calls are infrequent; read at each new query instead of caching stale
++ * network addresses. Linux without an explicit override retains upstream DNS.
++ */
++static const char *p2d_resolver_path(void)
++{
++    const char *path = getenv("P2D_SLIRP_RESOLV_CONF");
++#ifdef __ANDROID__
++    return path && path[0] == '/' ? path : "";
++#else
++    return path;
++#endif
++}
++static int p2d_private_dns(const char *path, int af, void *address,
++                           uint16_t *port, uint32_t *scope)
++{
++    struct stat st;
++    char data[4097], token[257];
++    int fd, result = -1;
++    ssize_t size;
++    if (!path || path[0] != '/') { return -1; }
++    fd = open(path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK);
++    if (fd < 0) { return -1; }
++    if (fstat(fd, &st) || !S_ISREG(st.st_mode) || st.st_size > 4096) {
++        close(fd); return -1;
++    }
++    size = read(fd, data, sizeof(data));
++    close(fd);
++    if (size < 0 || size > 4096) { return -1; }
++    data[size] = 0;
++    char *save, *line = strtok_r(data, "\n", &save);
++    while (line) {
++        if (sscanf(line, "nameserver%*[ \t]%256s", token) == 1) {
++            char *zone = strchr(token, '%');
++            uint32_t index = 0;
++            if (zone) {
++                *zone++ = 0;
++                char *end;
++                unsigned long n = strtoul(zone, &end, 10);
++                index = *zone && !*end && n <= UINT32_MAX ? n : if_nametoindex(zone);
++                if (!index) { line = strtok_r(NULL, "\n", &save); continue; }
++            }
++            if (inet_pton(af, token, address) == 1) {
++                *port = htons(53);
++                if (scope) { *scope = index; }
++                result = 0; break;
++            }
++        }
++        line = strtok_r(NULL, "\n", &save);
++    }
++    return result;
++}
++
+ static int get_dns_addr_cached(void *pdns_addr, void *cached_addr,
+                                socklen_t addrlen, struct stat *cached_stat,
+                                unsigned *cached_time)
+@@ -516,6 +571,8 @@
+ int get_dns_addr(struct in_addr *pdns_addr, uint16_t *pdns_port)
+ {
+     static struct stat dns_addr_stat;
++    const char *private_path = p2d_resolver_path();
++    if (private_path) { return p2d_private_dns(private_path, AF_INET, pdns_addr, pdns_port, NULL); }
+ 
+     if (dns_addr.s_addr != 0) {
+         int ret;
+@@ -535,6 +592,8 @@
+                   uint32_t *scope_id)
+ {
+     static struct stat dns6_addr_stat;
++    const char *private_path = p2d_resolver_path();
++    if (private_path) { return p2d_private_dns(private_path, AF_INET6, pdns6_addr, pdns6_port, scope_id); }
+ 
+     if (!in6_zero(&dns6_addr)) {
+         int ret;

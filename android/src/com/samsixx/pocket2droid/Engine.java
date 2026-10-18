@@ -19,6 +19,8 @@ final class Engine {
     private final Context context;
     final StorageLayout layout;
     final File root, rom, cab, storage, frames;
+    // Successive Engines share the runtime frame file; retired readers can overlap.
+    static final Object frameAccess=new Object();
     final String executable;
     interface Status { void changed(String message); }
     interface Completion { void finished(boolean success); }
@@ -46,6 +48,10 @@ final class Engine {
     private BufferedReader input;
     private OutputStream output;
     private volatile RandomAccessFile storageHandle;
+    private volatile RandomAccessFile ramHandle;
+    private File retainedRam;
+    private NetworkSession networkSession;
+    private File networkSetupFile;
     private int requestId;
 
     Engine(Context context, Status sink) {
@@ -68,10 +74,10 @@ final class Engine {
         return StorageLayout.digest(file);
     }
     private boolean audioAlive() { AudioPlayer p=audioPlayer;return p!=null&&p.alive(); }
-    boolean busy() { synchronized (ownership) { return starting || importing || alive() || audioAlive() || storageHandle != null || (owner != null && owner != this); } }
+    boolean busy() { synchronized (ownership) { return starting || importing || alive() || audioAlive() || storageHandle != null || ramHandle != null || (owner != null && owner != this); } }
     boolean beginImport() {
         synchronized (ownership) {
-            if (disposed || starting || importing || alive() || audioAlive() || storageHandle != null || (owner != null && owner != this)) return false;
+            if (disposed || starting || importing || alive() || audioAlive() || storageHandle != null || ramHandle != null || (owner != null && owner != this)) return false;
             if(!SessionGuard.claim(this,layout.profile==null?null:layout.profile.filename))return false;
             importing = true; owner = this; return true;
         }
@@ -79,22 +85,38 @@ final class Engine {
     void endImport() { synchronized (ownership) { importing = false; releaseOwner(); } }
     private void releaseOwner() {
         synchronized (ownership) {
-            if (owner == this && !starting && !importing && !alive() && !audioAlive() && storageHandle == null) { owner = null;SessionGuard.release(this); }
+            if (owner == this && !starting && !importing && !alive() && !audioAlive() && storageHandle == null && ramHandle == null) { owner = null;SessionGuard.release(this); }
         }
     }
-    ProcessBuilder processBuilder() {
-        RomSettings.GuestResolution size=layout.profile==null?RomSettings.GuestResolution.QVGA:layout.profile.settings.startupResolution(layout.profile.filename);
+    ProcessBuilder processBuilder() throws IOException {
+        RomSettings.GuestSize size=layout.profile==null?new RomSettings.GuestSize(240,320):layout.profile.settings.startupSize(layout.profile.filename);
         String machine = "p2d-devemu,storage=" + option(storage) + ",frame-file=" + option(frames) +
                          ",screen-width="+size.width+",screen-height="+size.height+
                          ",audio-file=" + option(layout.audio) +
                          ",shared-folder=" + option(layout.sdcard) + ",storage-lock=" + option(new File(layout.runtime, "engine-storage.lock")) +
                          ",parent-pid=" + android.os.Process.myPid();
-        return new ProcessBuilder(executable, "-machine", machine,
+        if(retainedRam!=null){
+            if(ramHandle==null)throw new IOException("WM5 retained RAM handle unavailable");
+            try{
+                android.system.StructStat stat=android.system.Os.fstat(ramHandle.getFD());
+                machine+=",ram-path="+option(retainedRam)+",ram-identity="+
+                    Long.toHexString(stat.st_dev)+":"+Long.toHexString(stat.st_ino);
+            }catch(android.system.ErrnoException error){throw new IOException("Cannot identify WM5 RAM backing file",error);}
+        }
+        boolean internet=layout.profile!=null&&layout.profile.settings.internetEnabled;
+        if(internet){machine+=",network=on";machine=NetworkSetup.appendMachineOption(machine,networkSetupFile);}
+        List<String> args=new ArrayList<>(Arrays.asList(executable, "-machine", machine,
             "-m", "128M", "-bios", rom.getPath(), "-accel", "tcg,thread=single",
             "-display", "none", "-monitor", "none", "-serial", "none", "-S",
-            "-qmp", "unix:" + option(layout.control) + ",server=on,wait=off");
+            "-qmp", "unix:" + option(layout.control) + ",server=on,wait=off"));
+        NetworkConfig.appendArguments(args,internet,internet?layout.profile.settings.networkMac:null);
+        return new ProcessBuilder(args);
     }
     private static String option(File file){return file.getPath().replace(",",",,");}
+    void prepareFrames()throws IOException {
+        RomSettings.GuestSize size=layout.profile==null?new RomSettings.GuestSize(240,320):layout.profile.settings.startupSize(layout.profile.filename);
+        synchronized(frameAccess){try(RandomAccessFile f=new RandomAccessFile(frames,"rw")){FrameProtocol.initialize(f,size.width,size.height);}}
+    }
     static String activeProfileFilename(){return SessionGuard.filename();}
     void start() {
         synchronized (ownership) {
@@ -111,11 +133,14 @@ final class Engine {
                 if (!StorageAccess.granted(context)) throw new IOException("Allow all-files storage access, then Start. Guest files stay in pocket2droid.");
                 status.changed("Preparing pocket2droid folders and checking ROM...");
                 layout.prepare(); StorageLayout.verifyRom(rom);
+                networkSetupFile=null;
+                try{networkSetupFile=NetworkSetup.prepare(context,layout.profile==null?null:layout.profile.settings);}
+                catch(IOException unavailable){status.changed("Automatic network setup unavailable. In Windows Mobile Network Cards, select The Internet.");}
                 // Open before QEMU can dirty pages, retaining Linux's writeback-error cursor.
                 storageHandle = new RandomAccessFile(storage, "rw");
-                try (RandomAccessFile f = new RandomAccessFile(frames, "rw")) {
-                    f.setLength(FrameProtocol.SIZE); f.seek(0); f.write(new byte[64]);
-                }
+                retainedRam=GuestRam.prepare(rom,storage.getParentFile(),layout.runtime);
+                if(retainedRam!=null)ramHandle=new RandomAccessFile(retainedRam,"rw");
+                prepareFrames();
                 boolean audioReady=false;
                 try (RandomAccessFile f = new RandomAccessFile(layout.audio,"rw")) {
                     f.setLength(AudioProtocol.SIZE);
@@ -125,6 +150,12 @@ final class Engine {
                 File control = layout.control;
                 if (control.exists() && !control.delete()) throw new IOException("Cannot remove stale control socket");
                 ProcessBuilder builder = processBuilder();
+                builder.environment().remove("P2D_SLIRP_RESOLV_CONF");
+                if(layout.profile!=null&&layout.profile.settings.internetEnabled){
+                    networkSession=new NetworkSession(context,new File(context.getFilesDir(),"network"),worker,status::changed);
+                    networkSession.start();
+                    builder.environment().put("P2D_SLIRP_RESOLV_CONF",networkSession.resolverFile().getAbsolutePath());
+                }
                 builder.redirectErrorStream(true);
                 builder.environment().remove("LD_PRELOAD"); builder.environment().remove("LD_LIBRARY_PATH");
                 File temporary = layout.temporary;
@@ -134,9 +165,11 @@ final class Engine {
                 process = builder.start();
                 expectedExit = false;
                 java.lang.Process owner = process;
+                final NetworkSession processNetwork=networkSession;
                 new Thread(() -> {
                     try {
                         int code = owner.waitFor();
+                        if(processNetwork!=null)processNetwork.close();
                         try {
                             worker.execute(() -> {
                                 if (process == owner && !expectedExit) {
@@ -251,6 +284,14 @@ final class Engine {
         if (storageHandle == null || storageHandle.length() != 32L * 1024 * 1024)
             throw new IOException("Persistent storage handle unavailable or size changed");
         StorageSync.flush(storageHandle.getFD());
+        if(retainedRam!=null){
+            if(ramHandle==null)throw new IOException("WM5 retained RAM handle unavailable");
+            syncRam();
+        }
+    }
+    private void syncRam()throws IOException{
+        if(ramHandle.length()!=GuestRam.SIZE)throw new IOException("WM5 retained RAM size changed");
+        StorageSync.flush(ramHandle.getFD());
     }
     private void applyRunning(boolean run) throws Exception {
         if (!run) releaseKeys();
@@ -340,8 +381,19 @@ final class Engine {
             if (alive()) { status.changed("Engine shutdown pending; restart blocked to protect storage"); return false; }
         }
         process = null;
-        if (storageHandle != null) {
-            try { syncStorage(); storageHandle.close(); storageHandle = null; }
+        if(networkSession!=null){networkSession.close();networkSession=null;}
+        if (storageHandle != null || ramHandle != null) {
+            try {
+                // Retry partial close failures without requiring a handle that
+                // has already closed. Never release ownership while either lives.
+                if(storageHandle!=null){
+                    if(storageHandle.length()!=StorageLayout.STORAGE_SIZE)throw new IOException("Persistent storage size changed");
+                    StorageSync.flush(storageHandle.getFD());
+                }
+                if(ramHandle!=null){syncRam();ramHandle.close();ramHandle=null;}
+                if(storageHandle!=null){storageHandle.close();storageHandle=null;}
+                retainedRam=null;
+            }
             catch (IOException error) { status.changed("Storage sync/close error: " + error.getMessage()); return false; }
         }
         releaseOwner();
@@ -359,8 +411,9 @@ final class Engine {
                 if (alive() && output != null) {
                     releaseKeys(); command("stop", null); syncStorage();
                     synced = true; command("quit", null);
-                } else if (storageHandle != null) {
-                    syncStorage(); synced = true;
+                } else if (storageHandle != null || ramHandle != null) {
+                    if(storageHandle!=null)syncStorage();else syncRam();
+                    synced = true;
                 }
             } catch (Exception error) { failed = true; status.changed("Exit/sync error: " + error.getMessage()); }
             finally { boolean success=cleanup()&&!failed;if(success)status.changed(synced?"Stopped; internal storage flushed":"Stopped");if(completion!=null)completion.finished(success); }
